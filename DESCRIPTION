@@ -1,0 +1,4 @@
+Package: BLASTtbmod
+Version: 0.0.1
+LinkingTo: cpp11, dust
+RoxygenNote: 7.3.1
