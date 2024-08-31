@@ -2,6 +2,7 @@
 
 export(case_compare7)
 export(create.particlefilter)
+export(run.pmcmc)
 export(stocm)
 import(mcstate)
 import(odin)
