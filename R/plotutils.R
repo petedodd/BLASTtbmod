@@ -301,80 +301,103 @@ plot_compare_demog <- function(Y,
 ## }
 
 
-## ## HIV/ART over time
-## HIV.dynamic.pc <- function( Y, chain_step_num=1, out_type='N', by_age = F){
-  
-##   D <- extract.pops( Y, chain_step_num, out_type )
+##' HIV/ART over time
+##'
+##' TODO
+##' @title HIV by time
+##' @param Y 
+##' @param start_year 
+##' @param chain_step_num 
+##' @param out_type 
+##' @param by_age 
+##' @return ggplot
+##' @author Pete Dodd
+##' @import ggplot2
+##' @import scales
+##' @import data.table
+##' @export
+plot_HIV_dynamic <- function( Y, start_year, chain_step_num=1, out_type='N', by_age = FALSE){
+  ## TODO total population
+  D <- extract.pops( Y, chain_step_num, out_type )
+  dt <- 1/12 #monthly
+  ## reformat
+  if( by_age == FALSE ){
+    X <- data.table::dcast( D,patch+step ~ hiv, fun.aggregate = sum )
+    vars <- c("HIVpc", "ARTpc", "patch", "step")
+    id <- c("patch", "step")
+  } else {
+    if( by_age == TRUE ){
+      X <- data.table::dcast(D, patch + step + age ~ hiv, fun.aggregate = sum)
+      id <- c("patch", "step", "age")
+      vars <- c("HIVpc", "ARTpc", "patch", "step", "age")
+    } else { stop('by_age must be TRUE or FALSE') }
+  }
+  X[,tot:= `HIV-`+`HIV+/ART-`+`HIV+/ART+`]
+  X[,HIVpc:=(`HIV+/ART-`+`HIV+/ART+`)/tot]
+  X[,ARTpc:=`HIV+/ART+`/(`HIV+/ART-`+`HIV+/ART+` + 1e-10)]
+  X <- data.table::melt(X[,..vars],id=id)
+  out_lab <- out_type # default
+  if( out_type == 'N' ){
+    out_lab <- "Population"
+  } else {
+    if( out_type == 'incidence'){
+      out_lab <- "Incidence"
+    } else {
+      if(out_type == "notifrate" ){
+        out_lab <- "Notification rate"
+      }
+    }
+  }
+  ## plot
+  wrap_vars <- id[-which(id=='step')]
+  ggplot2::ggplot(X, aes(step*dt+start_year, value, col=variable))+
+    ggplot2::geom_line()+
+    ggplot2::facet_grid(wrap_vars)+
+    ggplot2::scale_y_continuous(label=scales::percent)+
+    ggplot2::theme_linedraw()+
+    ggplot2::xlab('Year')+
+    ggplot2::ylab( paste( out_lab, '(Proportion)'))+
+    ggplot2::theme(legend.position = 'top',
+          legend.title=element_blank())+
+    ggplot2::scale_color_discrete(labels = c("HIV+/ART-", "HIV+/ART+"))
+}
 
-##   ## reformat
-##   if( by_age == FALSE ){
-##     X <- dcast( D,patch+step ~ hiv, fun.aggregate = sum )
-##     vars <- c('HIVpc','ARTpc','patch','step')
-##     id <- c('patch','step')
-##   } else {
-##     if( by_age == TRUE ){
-##       X <- dcast( D,patch+step+age ~ hiv, fun.aggregate = sum )
-##       id <- c('patch','step', 'age')
-##       vars <- c('HIVpc','ARTpc','patch','step','age')
-##     } else { stop('by_age must be TRUE or FALSE') }
-##   }
-##   X[,tot:= `HIV-`+`HIV+/ART-`+`HIV+/ART+`]
-##   X[,HIVpc:=(`HIV+/ART-`+`HIV+/ART+`)/tot]
-##   X[,ARTpc:=`HIV+/ART+`/(`HIV+/ART-`+`HIV+/ART+` + 1e-10)]
-##   X <- melt(X[,..vars],id=id)
-  
-##   out_lab <- out_type # default
-##   if( out_type == 'N' ){
-##     out_lab <- 'Population'
-##   } else {
-##     if( out_type == 'incidence'){
-##       out_lab <- 'Incidence'
-##     } else {
-##       if( out_type == 'notifrate'){
-##         out_lab <- 'Notification rate'
-##       }
-##     }
-##   }
-  
-##   ## plot
-##   wrap_vars <- id[-which(id=='step')]
-##   ggplot(X, aes(step*dt+start_year, value, col=variable))+
-##     geom_line()+
-##     facet_grid(wrap_vars)+
-##     scale_y_continuous(label=percent)+
-##     theme_light()+
-##     xlab('Year')+
-##     ylab( paste( out_lab, '(Proportion)'))+
-##     theme(legend.position = 'top',
-##           legend.title=element_blank())+
-##     scale_color_discrete( labels = c( 'HIV+/ART-', 'HIV+/ART+'))
-## }
 
 
-## ## HIV/ART by age
-## HIV.snapshot.pc <- function( Y, chain_step_num=1, out_type='N', timestep=NULL ){
-  
-##   D <- extract.pops( Y, chain_step_num, out_type )
-  
-##   ## reformat
-##   if( length( timestep > 0)){
-##     X <- dcast( D[ step==timestep, ], patch+age ~ hiv, fun.aggregate = sum)
-##   } else {
-##     X <- dcast( D, patch+age ~ hiv, fun.aggregate = sum )
-##   }
-##   X <- melt(X,id=c('patch','age'))
-##   # X$variable <- factor(X$variable,levels=hnmz,ordered = TRUE)
-  
-##   ## plot
-##   ggplot(X, aes( age, value, fill=variable))+
-##     geom_bar(stat='identity',position = position_fill())+
-##     facet_wrap(~patch)+
-##     scale_y_continuous(label=percent)+
-##     theme_linedraw()+
-##     theme(axis.text.x = element_text(angle = 45, hjust = 1),
-##           legend.position = 'top',legend.title=element_blank())+
-##     xlab('Age')+ylab('Population')
-## }
+##' HIV snapshot by age at single time
+##'
+##' TODO
+##' @title HIV snapshot
+##' @param Y 
+##' @param chain_step_num 
+##' @param out_type 
+##' @param timestep 
+##' @return ggplot
+##' @author Pete Dodd
+##' @export
+##' @import ggplot2
+##' @import data.table
+##' @import scales
+plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL ){
+  ## TODO improve what this actually plots
+  D <- extract.pops( Y, chain_step_num, out_type )
+  ## reformat
+  if( length( timestep > 0)){
+    X <- data.table::dcast( D[ step==timestep, ], patch+age ~ hiv, fun.aggregate = sum)
+  } else {
+    X <- data.table::dcast(D, patch + age ~ hiv, fun.aggregate = sum)
+  }
+  X <- data.table::melt(X, id = c("patch", "age"))
+  ## plot
+  ggplot2::ggplot(X, aes( age, value, fill=variable))+
+    ggplot2::geom_bar(stat='identity',position = position_fill())+
+    ggplot2::facet_wrap(~patch)+
+    ggplot2::scale_y_continuous(label=scales::percent)+
+    ggplot2::theme_linedraw()+
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = 'top',legend.title=element_blank())+
+    ggplot2::xlab("Age") + ggplot2::ylab("Population")
+}
 
 
 ## ## TB incidence by time
