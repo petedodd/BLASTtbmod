@@ -16,10 +16,10 @@ case_compare7 <- function(state, observed, pars = NULL) {
     ## NOTE changed to calculate total note before aggregation and then calculate rates
     ## rate x pop = 7 total notes x 100k
     totnotes <- colSums(
-      state[BLASTtbmod::n7[[i]], , drop = TRUE] *
-      state[BLASTtbmod::N7[[i]], , drop = TRUE]
+      state[BLASTtbmod::ln7[[i]], , drop = TRUE] *
+      state[BLASTtbmod::bn7[[i]], , drop = TRUE]
     )
-    totpops <- colSums(state[BLASTtbmod::N7[[i]], , drop = TRUE])
+    totpops <- colSums(state[BLASTtbmod::bn7[[i]], , drop = TRUE])
     notes_modelled <- totnotes / totpops # back to rate
     notes_observed <- observed[[paste0("notifrate_", i)]]
     ans <- ans + dnorm(x = notes_modelled,
