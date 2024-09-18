@@ -165,50 +165,59 @@ plot_compare_demog <- function(Y,
 
 
 
-## # Separate function to deal with aggregating rates
-## # Defaults to providing notifrates over patches only
-## # Currently will only do patch in line with current real data
-## # Looks like real data has hiv/art/age available too, so can do this later?
-## # Data md7 must be in env
-## plot.compare.noterate.agrgt <- function( Y, n_chain_steps = 100,
-##                                          agrgt_by = c( 'patch' )){
-  
-##   D1 <- extract.pops.multi( Y, n_chain_steps, out_type='N' )
-##   D1[,'subcomp' := NULL ]
-##   D2 <- extract.pops.multi( Y, n_chain_steps, out_type='notes' )
-##   D2[,'subcomp' := NULL]
-##   D <- merge( D1, D2, by = c( 'chain_step', 't', 'patch', 'age', 'hiv'))
+# Separate function to deal with aggregating rates
+# Defaults to providing notifrates over patches only
+# Currently will only do patch in line with current real data
+# Looks like real data has hiv/art/age available too, so can do this later?
+# Data md7 must be in env
+#' 
+#' @title Plot average notification rates & compare with real data
+#' @param Y 
+#' @param n_chain_steps 
+#' @param agrgt_by 
+#' @return ggplot2
+#' @import data.table
+#' @import ggplot2
+#' @import dplyr
+#' @export
+plot_compare_noterate_agrgt <- function( Y, 
+                                         n_chain_steps = 100,
+                                         agrgt_by = c( 'patch' )){
 
-##   agrgt_by <- c( agrgt_by, 'chain_step', 't' )
-##   aggD <- D %>%
-##     group_by(across(all_of(agrgt_by))) %>%
-##     summarise( tot_N = sum(N),
-##                tot_notes = sum(notes)) %>%
-##     as.data.table()
-##   aggD[, noterate := tot_notes/tot_N*1e5 ]
-  
-##   # Generate ribbon
-##   eps = 0.25
-##   aggD <- aggD[ ,.( mid=median( noterate ),
-##                lo = quantile( noterate, eps ),
-##                hi = quantile( noterate, 1-eps )),
-##             by=.(t, patch )]
-  
-##   real_dat = md7
-##   real_dat[[ 'patch' ]] <- paste( 'Patch', md7$comid )
-  
-##   p <- ggplot( aggD, aes( t, y = mid, ymin = lo, ymax = hi)) +
-##     geom_ribbon(alpha = 0.3) +
-##     geom_line() +
-##     facet_wrap(~patch) +
-##     geom_point(data = real_dat, col = 2, shape = 1) +
-##     ylab("Notification rate per month") +
-##     xlab("Month") +
-##     ggtitle("Real data, median + 50% PI")
-##   plot.new()
-##   print(p)
+  D1 <- extract.pops.multi( Y, n_chain_steps, out_type='N' )
+  D1[,'subcomp' := NULL ]
+  D2 <- extract.pops.multi( Y, n_chain_steps, out_type='notes' )
+  D2[,'subcomp' := NULL]
+  D <- merge( D1, D2, by = c( 'chain_step', 't', 'patch', 'age', 'hiv'))
 
-## }
+  agrgt_by <- c( agrgt_by, 'chain_step', 't' )
+  aggD <- D %>%
+    dplyr::group_by( dplyr::across( dplyr::all_of(agrgt_by))) %>%
+    dplyr::summarise( tot_N = sum(N),
+               tot_notes = sum(notes)) %>%
+    data.table::as.data.table()
+  aggD[, noterate := tot_notes/tot_N*1e5 ]
+
+  # Generate ribbon
+  eps = 0.25
+  aggD <- aggD[ ,.( mid=median( noterate ),
+               lo = quantile( noterate, eps ),
+               hi = quantile( noterate, 1-eps )),
+            by=.(t, patch )]
+
+  real_dat = BLASTtbmod::md7
+  real_dat[[ 'patch' ]] <- paste( 'Patch', md7$comid )
+
+  p <- ggplot2::ggplot( aggD, aes( t, y = mid, ymin = lo, ymax = hi)) +
+    ggplot2::geom_ribbon(alpha = 0.3) +
+    ggplot2::geom_line() +
+    ggplot2::facet_wrap(~patch) +
+    ggplot2::geom_point(data = real_dat, col = 2, shape = 1) +
+    ggplot2::ylab("Notification rate per month") +
+    ggplot2::xlab("Month") +
+    ggplot2::ggtitle("Real data, median + 50% PI")
+  print(p)
+}
 
 
 
