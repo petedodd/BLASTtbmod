@@ -2,53 +2,53 @@
 ##'
 ##' TODO
 ##' @title Create parameter object
-##' @param start_year 
-##' @param years 
+##' @param start_year
+##' @param years
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
 ##' @import data.table
 ##' @import logitnorm
-get.parms <- function( start_year, years  ){
-
+get.parms <- function(start_year, years) {
   ########## Model dimensions & simulation parameters required for setup ############
-  patch_dims <- 7                        # number of patches = 3x3 grid     # Put in func
-  age_dims <- 3                          # Number of age groups             # put in func
-  HIV_dims <- 3                          # None, HIV, ART                   # put in func
-  dt <- 1/12                             #NOTE monthly timesteps hardcoded
+  patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
+  age_dims <- 3 # Number of age groups             # put in func
+  HIV_dims <- 3 # None, HIV, ART                   # put in func
+  dt <- 1 / 12 # NOTE monthly timesteps hardcoded
   tt <- as.double(seq(0, 12 * years)) # Vector of timesteps
-  sim_length <- length(tt)               # Length of simulation
-  offsetPops <- rep(1,patch_dims)
+  sim_length <- length(tt) # Length of simulation
+  offsetPops <- rep(1, patch_dims)
 
   ## birthrates
   birthrate_dat <- merge(
     BLASTtbmod::MWI$B[
-          Year %in% start_year:(start_year + years),
-          list(Year, Births)
-        ],
+      Year %in% start_year:(start_year + years),
+      list(Year, Births)
+    ],
     BLASTtbmod::MWI$N[
-          Year %in% start_year:(start_year + years),
-          list(N = sum(PopTotal)),
-          by = Year
-        ],
+      Year %in% start_year:(start_year + years),
+      list(N = sum(PopTotal)),
+      by = Year
+    ],
     by = "Year"
   )
-  birthrate_dat[, birthrate := 1e3 * Births / N ]
+  birthrate_dat[, birthrate := 1e3 * Births / N]
   births_int <- approx(birthrate_dat$birthrate, n = sim_length)$y
 
   ## initial age frax
-  age.frax <- BLASTtbmod::MWI$N[Year==start_year,PopTotal] #NOTE requires ages in order
+  age.frax <- BLASTtbmod::MWI$N[Year == start_year, PopTotal] # NOTE requires ages in order
   age.frax <- age.frax / sum(age.frax)
 
   ## Get correct years for HIV
-  HIV_inc_1990_2021 <- BLASTtbmod::HIV_inc_1990_2021[ which( HIV_inc_1990_2021$Year %in% start_year:(start_year+years) ),]
+  HIV_inc_1990_2021 <- BLASTtbmod::HIV_inc_1990_2021[which(HIV_inc_1990_2021$Year %in% start_year:(start_year + years)), ]
   HIV_int <- approx(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est, n = sim_length)$y
 
   ## Time varying ART initiation - interpolate
   ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
 
-  ## Risk-modifier for TB infection based on HIV status
-  TB_HIV_mod <- c( 1, 10, 2 )
+  ## Risk-modifiers for TB based on HIV status
+  TB_HIV_mod <- c(1, 1, 1) # infection by HIV
+  Hirr <- c(1, 10, 2) # progression IRR by HIV
 
   ## Background death rates by HIV index
   ## set background death rate for ART same as no HIV
@@ -56,13 +56,15 @@ get.parms <- function( start_year, years  ){
   tiz <- round(tiz)
   tiz <- as.integer(tiz) - start_year + 1 # which MU row to use
 
-  ## create the death rate data structures 
+  ## create the death rate data structures
   ## NOTE: m_in still placeholder
   ## No longer interpolated - takes static value for corresponding year for each timestep
   mu_noHIV_int <- m_in_int <- matrix(data = 0, ncol = sim_length, nrow = age_dims)
-  MU <- BLASTtbmod::MWI$omega[Year %in% start_year:(start_year + years),
-                              list(Year, AgeGrp, mu = omegaT - r)]
-  MU <- as.matrix(dcast(MU, Year ~ AgeGrp, value.var = "mu"))[, -1]  # mu per age group per year
+  MU <- BLASTtbmod::MWI$omega[
+    Year %in% start_year:(start_year + years),
+    list(Year, AgeGrp, mu = omegaT - r)
+  ]
+  MU <- as.matrix(dcast(MU, Year ~ AgeGrp, value.var = "mu"))[, -1] # mu per age group per year
   for (i in 1:ncol(mu_noHIV_int)) {
     for (j in 1:ncol(MU)) {
       val <- MU[tiz[i], j]
@@ -92,12 +94,13 @@ get.parms <- function( start_year, years  ){
     HIV_dims = HIV_dims,
     age_dims = age_dims,
     age_rate = c(1 / 15, 1 / 35, 1e-6),
-    agefracs = age.frax, #initial age fractions
+    agefracs = age.frax, # initial age fractions
     ageMids = c(15 / 2, (15 + 50) / 2, 60),
     births_int = births_int,
     HIV_int = HIV_int,
     ART_int = ART_int,
     TB_HIV_mod = TB_HIV_mod,
+    Hirr = Hirr,
     mu_noHIV_int = mu_noHIV_int,
     mu_HIV_int = mu_HIV_int,
     mu_ART_int = mu_ART_int,
@@ -124,3 +127,4 @@ get.parms <- function( start_year, years  ){
   )
   return(parms)
 }
+
