@@ -220,61 +220,74 @@ plot_compare_noterate_agrgt <- function( Y,
 }
 
 
+# general plotter - takes state from mcstate
+# Either pmcmc_run$trajectories$state object or forecast$state object or filter.stocmmodr$history()
+# will plot any output (out_type) by patch, age and/or hiv
+# (specified as character vector by_comp). Choose any chain_step.
+# Defaults to chain_step 1, total population, aggregates over compartments
+#' @title Plot selected populations/compartments over time (absolute numbers, no comparison w/real data)
+#'
+#' @param Y 
+#' @param chain_step_num 
+#' @param out_type 
+#' @param by_comp 
+#' @import dplyr
+#' @import ggplot2
+#' @import ggh4x
+#' @return ggplot2
+#' @export
 
+plot_pops_dynamic <- function( Y, 
+                               chain_step_num=1, 
+                               out_type='N',
+                               start_year=2015,
+                               by_comp=NULL ){
 
-
-## # general plotter - takes state from mcstate
-## # Either pmcmc_run$trajectories$state object or forecast$state object or filter.stocmmodr$history()
-## # will plot any output (out_type) by patch, age and/or hiv 
-## # (specified as character vector by_comp). Choose any chain_step.
-## # Defaults to chain_step 1, total population, aggregates over compartments
-## plot.pops.dynamic <- function( Y, chain_step_num=1, out_type='N',
-##                        by_comp=NULL ){
-
-##   D <- extract.pops( Y, chain_step_num, out_type )
-##   grp_vars <- c( 'step', by_comp )
-##   Dplot <- D %>% 
-##     group_by( across( all_of( grp_vars ))) %>%
-##     summarise( tot_pop = sum(value))
-##   Dplot$default_col <- 1
+  D <- extract.pops( Y, chain_step_num, out_type )
+  grp_vars <- c( 'step', by_comp )
+  Dplot <- D %>%
+    dplyr::group_by( dplyr::across( dplyr::all_of( grp_vars ))) %>%
+    dplyr::summarise( tot_pop = sum(value))
+  Dplot$default_col <- 1
   
-##   if( 'age' %in% by_comp ){
-##     by_comp <- by_comp[-which(by_comp=='age')]
-##     col_age <- T
-##   } else {
-##     col_age <- F
-##   }
-##   out_lab <- out_type # default
-##   if( out_type == 'N' ){
-##     out_lab <- 'Total population'
-##   } else {
-##     if( out_type == 'incidence'){
-##       out_lab <- 'Incidence'
-##     } else {
-##       if( out_type == 'notifrate'){
-##         out_lab <- 'Notification rate'
-##       }
-##     }
-##   }
+  dt <- 1 / 12
   
-##   p <- ggplot( Dplot, aes( x=step*dt+start_year, y = tot_pop )) +
-##     xlab( 'Step' )+
-##     ylab( out_lab )+
-##     scale_y_continuous(label=comma)+
-##     guides(color = guide_legend(title = "Age group"))+ 
-##     theme_light()
-##   if( col_age ){
-##     p <- p + geom_line( aes( colour = age ))
-##   }else{
-##     p <- p + geom_line()
-##   }
-##   if( length( by_comp > 0)){
-##     p <- p + facet_grid2( by_comp, 
-##                           independent = TRUE,
-##                           scales='free')
-##   }
-##   print(p)
-## }
+  if( 'age' %in% by_comp ){
+    by_comp <- by_comp[-which(by_comp=='age')]
+    col_age <- T
+  } else {
+    col_age <- F
+  }
+  out_lab <- out_type # default
+  if( out_type == 'N' ){
+    out_lab <- 'Total population'
+  } else {
+    if( out_type == 'incidence'){
+      out_lab <- 'Incidence'
+    } else {
+      if( out_type == 'notifrate'){
+        out_lab <- 'Notification rate'
+      }
+    }
+  }
+  p <- ggplot2::ggplot( Dplot, aes( x=step*dt+start_year, y = tot_pop )) +
+    ggplot2::xlab( 'Step' )+
+    ggplot2::ylab( out_lab )+
+    ggplot2::scale_y_continuous(label=comma)+
+    ggplot2::guides(color = guide_legend(title = "Age group"))+
+    ggplot2::theme_light()
+  if( col_age ){
+    p <- p + ggplot2::geom_line( aes( colour = age ))
+  }else{
+    p <- p + ggplot2::geom_line()
+  }
+  if( length( by_comp > 0)){
+    p <- p + ggh4x::facet_grid2( by_comp,
+                                   independent = TRUE,
+                                   scales='free')
+  }
+  print(p)
+}
 
 
 ## ## demographic snapshot (bar)
