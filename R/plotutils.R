@@ -422,31 +422,44 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 }
 
 
-## ## TB incidence by time
-## TB.dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=F){
+## TB incidence by time
+#' @title Plot sample TB incidence 
+#' @param Y 
+#' @param chain_step_num 
+#' @param out_type 
+#' @param separate 
+#' @param by_age 
+#' @return ggplot2
+#' @export 
+#' @import ggplot2
+#' @import ggh4x
+plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=F){
   
-##   D <- extract.pops( Y, chain_step_num, out_type )
-##   by_comp <- 'patch'
+  D <- extract.pops( Y, chain_step_num, out_type )
+  by_comp <- 'patch'
+  dt <- 1/12
 
-##   if( separate==FALSE ){
-##     D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
-##     D <- D[,.(value=sum(value)),by=.(step,patch,age,hiv)]
-##   }
-##   if( by_age==FALSE ){
-##     D <- D[,.(value=sum(value)),by=.(step,patch,hiv)]
-##   } else {
-##     by_comp <- c( by_comp, 'age' )
-##   }
+  if( separate==FALSE ){
+    D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
+    D <- D[,.(value=sum(value)),by=.(step,patch,age,hiv)]
+  }
+  if( by_age==FALSE ){
+    D <- D[,.(value=sum(value)),by=.(step,patch,hiv)]
+  } else {
+    by_comp <- c( by_comp, 'age' )
+  }
   
-##   ggplot(D, aes(step*dt+start_year, value, col=hiv))+
-##     geom_line()+
-##     facet_grid2( by_comp, 
-##                  independent = TRUE,
-##                  scales='free')+
-##     theme_light()+
-##     xlab('Year')+
-##     ylab('TB incidence')
-## }
+  ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))+
+    ggplot2::geom_line()+
+    ggh4x::facet_grid2( by_comp,
+                 independent = TRUE,
+                 scales='free')+
+    ggplot2::theme_light()+
+    ggplot2::xlab('Year')+
+    ggplot2::ylab('TB incidence')
+}
+
+
 
 
 # # To take either pmcmc_run$trajectories$state object or forecast$state object or filter.stocmmodr$history()
