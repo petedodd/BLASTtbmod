@@ -461,6 +461,84 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
 
 
 
+## Note - this may need to be made more flexible to align with
+## different start-years for real-data comparison 
+## Plots HIV prevalence among TB notes -
+## Choose % or per 100,000
+## Choose to separate HIV into ART+/- or not
+## Currently works for single particle/chain step.... add variation over chain??
+#' @title Plot HIV prevalence among TB notifications#'
+#' @param Y 
+#' @param chain_step_num 
+#' @param separate 
+#' @param prev 
+#' @import plyr
+#' @import tidyverse
+#' @return ggplot2
+#' @export 
+HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){
+  
+  D <- extract.pops( Y, chain_step_num, out_type='notes' )
+  real_dat <- BLASTtbmod::TB_notes_HIV_patch
+
+  if( separate == FALSE ){
+    D$hiv <- plyr::mapvalues( D$hiv, 
+                               from = c( 'HIV+/ART-', 'HIV+/ART+'),
+                               to = c( 'HIV+', 'HIV+'))
+    real_dat$hiv <- plyr::mapvalues( real_dat$hiv, 
+                                     from = c( 'HIV+/ART-', 'HIV+/ART+'),
+                                     to = c( 'HIV+', 'HIV+'))
+  }
+  
+  D_out <- D %>%
+    dplyr::filter( value > 0 ) %>%
+    dplyr::group_by( patch, hiv ) %>%
+    dplyr::summarise( tot = sum(value)) %>%
+    dplyr::ungroup() %>%
+    tidyr::complete(patch, hiv, fill=list(sum_quantity=0))
+  D_notes <- D_out %>%
+    dplyr::group_by( patch ) %>%
+    dplyr::summarise( grandtot = sum( tot, na.rm=T ))
+  D_out <- merge( D_out, D_notes, by='patch', all.x = T )
+  D_out$prev_pc <- D_out$tot/D_out$grandtot*100
+  D_out$prev_ht <- D_out$tot/D_out$grandtot*1e5
+  D_out$dat_type <- 'Simulated data'
+  
+  real_out <- real_dat %>%
+    dplyr::filter( total > 0 ) %>%
+    dplyr::group_by( patch, hiv ) %>%
+    dplyr::summarise( tot = sum(total)) %>%
+    dplyr::ungroup() %>%
+    tidyr::complete(patch, hiv, fill=list(sum_quantity=0))
+  real_notes <- real_out %>%
+    dplyr::group_by( patch ) %>%
+    dplyr::summarise( grandtot = sum( tot, na.rm=T ))
+  real_out <- merge( real_out, real_notes, by='patch', all.x = T )
+  real_out$prev_pc <- real_out$tot/real_out$grandtot*100
+  real_out$prev_ht <- real_out$tot/real_out$grandtot*1e5
+  real_out <- real_out[ -which( real_out$hiv == 'Unknown'),]  # Remove unknowns for plotting ()
+  real_out$dat_type <- 'Real data'
+  
+  plotdat <- rbind( D_out, real_out )
+  if( prev == 'ht' ){
+    titletext <- 'HIV prevalence (per 100,000) among TB notifications'
+    yval <- 'prev_ht'
+  } else {
+    if( prev == 'pc' ){
+      titletext <- 'HIV prevalence (%) among TB notifications'
+      yval <- 'prev_pc'
+    }
+  }
+  
+  ggplot2::ggplot( plotdat, aes( x=patch, y=.data[[yval]], fill=hiv )) +
+    ggplot2::geom_bar(stat='identity', position = 'dodge')+
+    ggplot2::theme(legend.position = 'none',
+                   axis.title = element_blank())+
+    ggplot2::ggtitle( titletext )+
+    ggh4x::facet_grid2( hiv~dat_type )
+}
+
+
 
 # # To take either pmcmc_run$trajectories$state object or forecast$state object or filter.stocmmodr$history()
 # # requires TBN to be in env
