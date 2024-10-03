@@ -6,11 +6,6 @@
 \usage{
 get.parms(start_year, years)
 }
-\arguments{
-\item{start_year}{}
-
-\item{years}{}
-}
 \value{
 list
 }

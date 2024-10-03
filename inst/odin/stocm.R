@@ -148,7 +148,8 @@ ART_rate_yr[1] <- 0
 ART_rate_yr[2:3] <- ART_t
 
 ## TB IRR placeholder
-TB_HIV_mod[] <- user()
+TB_HIV_mod[] <- user() #NOTE this is applied as 
+Hirr[] <- user()       #NOTE IRR applied to progression
 
 # Assign background mortality
 mu_noHIV_int[,] <- user()
@@ -175,15 +176,19 @@ Pi <- user()
 epsi <- user()
 
 ## Mixing/infectivity
-foitemp[,] <- beta_seas * MM[i,j] * relinf * (sum( D[i,,])+sum( SC[i,,]))/( sum( N[i,,])+1e-15) # force of infection
-foi[] <- sum( foitemp[i,] )
+## Mij = contact rate from patch i to patch j
+foitemp[, ] <- beta_seas * MM[i, j] * (sum(D[j, , ]) + relinf * sum(SC[j, , ])) / (sum(N[j, , ]) + 1e-15) # force of infection on patch i from patch j: contact rate x prev in patch j
+foi[] <- sum( foitemp[i,] ) #FOI on each patch i: sum over FOIs from each patch
 MM[,] <- user()           # Mixing matrix 
-relinf <- user(1)         # Relative infectiousness (becomes matrix later?)
+relinf <- user(1)         # Relative infectiousness of SC relative to CD
 IRR[] <- user()
 
+initial(cum_inf_flux[, ]) <- 0 #initialize cumulative fluxes
 
 
-
+## TODO TB_HIV_mod acts only on infection: need HIV specific progression
+## TODO IRR acts only on patch
+## both the above need to be 1 really
 
 
 #########################
@@ -358,7 +363,8 @@ dim( HIV_int ) <- user()
 dim( HIV_rate_yr ) <- age_dims
 dim( ART_int ) <- user()
 dim( ART_rate_yr ) <- age_dims
-dim( TB_HIV_mod ) <- HIV_dims
+dim(TB_HIV_mod) <- HIV_dims
+dim(Hirr) <- HIV_dims
 dim( mu_noHIV_int ) <- user()
 dim( mu_noHIV_t ) <- c( age_dims )
 dim( mu_HIV_int ) <- user()
@@ -400,6 +406,11 @@ dim(tbi_R) <- c( patch_dims, age_dims )
 ## dim(pnotifrate) <- c(patch_dims)
 ## dim(pnotes) <- c(patch_dims)
 ## dim(ppop) <- c(patch_dims)
+
+## flux variables
+dim(InfsByPatchPatch) <- c(patch_dims, patch_dims)
+dim(InfsByPatch) <- c(patch_dims)
+dim(cum_inf_flux) <- c(patch_dims, patch_dims)
 
 
 ##########
@@ -569,7 +580,10 @@ U_inmigr[, , ] <- if(pU_inmigr[i, j, k]>0 && Nevents_U[i, j, k] - age_out_U[i, j
 Udeaths[, , ] <- Nevents_U[i, j, k] - age_out_U[i, j, k] - HIV_out_U[i, j, k] - Uinfs[i, j, k]-
   U_inmigr[i, j, k]
 
-
+## ---------------------- extra calculations associated with infection fluxes
+InfsByPatch[] <- sum(Uinfs[i, , ]) # number of infections in patch i this step
+InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol))
+update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
 
 ##############################
 ##### 2: Infected early ######
@@ -582,9 +596,9 @@ update(LR[, , ]) <- LR[i, j, k] + age_in_LR[i, j, k] + HIV_in_LR[i, j, k] + Uinf
   progFast[i, j, k] - stabilisations[i, j, k]
 
 ###### INFECTED EARLY: ENTRY EVENTS #####
-rate_LR[, , 1] <- mu_noHIV_t[j] + pDf * IRR[i] + pLL + age_rate[j] + HIV_rate_yr[j]
-rate_LR[, , 2] <- mu_HIV_t[j] + pDf * IRR[i] + pLL + age_rate[j] + ART_rate_yr[j]
-rate_LR[, , 3] <- mu_ART_t[j] + pDf * IRR[i] + pLL + age_rate[j]
+rate_LR[, , 1] <- mu_noHIV_t[j] + pDf * IRR[i] * Hirr[1] + pLL + age_rate[j] + HIV_rate_yr[j]
+rate_LR[, , 2] <- mu_HIV_t[j] + pDf * IRR[i] * Hirr[2] + pLL + age_rate[j] + ART_rate_yr[j]
+rate_LR[, , 3] <- mu_ART_t[j] + pDf * IRR[i] * Hirr[3] + pLL + age_rate[j]
 Nevents_LR[, , ] <- rbinom(LR[i, j, k], 1 - exp(-rate_LR[i, j, k] * dt))
 
 ## b) AGEING
@@ -600,22 +614,22 @@ p_LRage[,,] <- if(rate_LR[i,j,k] > tol) age_rate[j]/rate_LR[i,j,k] else 0
 age_out_LR[,,] <- rbinom( Nevents_LR[i,j,k], p_LRage[i,j,k] )
 
 ## b) HIV INFECTION
-p_LRHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] + pLL + HIV_rate_yr[j] > tol)
+p_LRHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] * Hirr[1] + pLL + HIV_rate_yr[j] > tol)
                     HIV_rate_yr[j] /
-                      (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] + pLL + HIV_rate_yr[j]) else 0
-p_LRHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] + pLL + ART_rate_yr[j] > tol)
+                      (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i]* Hirr[1] + pLL + HIV_rate_yr[j]) else 0
+p_LRHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] * Hirr[2] + pLL + ART_rate_yr[j] > tol)
                     ART_rate_yr[j] /
-                      (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] + pLL + ART_rate_yr[j]) else 0
+                      (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] * Hirr[2] + pLL + ART_rate_yr[j]) else 0
 p_LRHIV[,,3] <- 0
 HIV_out_LR[,,] <- rbinom( Nevents_LR[i,j,k]-age_out_LR[i,j,k], p_LRHIV[i,j,k])
 
 ## c) FAST PROGRESSION
-p_progFast[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] + pLL > tol)
-                       IRR[i] * pDf / (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] + pLL) else 0
-p_progFast[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] + pLL > tol)
-                       IRR[i] * pDf / (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] + pLL) else 0
-p_progFast[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDf * IRR[i] + pLL > tol)
-                       IRR[i] * pDf / (m_in_t[j] + mu_ART_t[j] + pDf * IRR[i] + pLL) else 0
+p_progFast[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] * Hirr[1] + pLL > tol)
+                       IRR[i] * pDf * Hirr[1] / (m_in_t[j] + mu_noHIV_t[j] + pDf * IRR[i] * Hirr[1] + pLL) else 0
+p_progFast[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] * Hirr[2] + pLL > tol)
+                       IRR[i] * pDf * Hirr[2] / (m_in_t[j] + mu_HIV_t[j] + pDf * IRR[i] * Hirr[2] + pLL) else 0
+p_progFast[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDf * IRR[i] * Hirr[3] + pLL > tol)
+                       IRR[i] * pDf * Hirr[3] / (m_in_t[j] + mu_ART_t[j] + pDf * IRR[i] * Hirr[3] + pLL) else 0
 progFast[,,] <- rbinom( Nevents_LR[i,j,k]-age_out_LR[i,j,k]-HIV_out_LR[i,j,k],p_progFast[i,j,k])
 
 
@@ -671,10 +685,10 @@ HIV_in_LL[, , 1] <- 0
 
 ###### INFECTED LATE: EXIT EVENTS #####
 rate_LL[, , 1] <- m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] +
-  pDs * IRR[i] + age_rate[j] + HIV_rate_yr[j]
+  pDs * IRR[i] * Hirr[1] + age_rate[j] + HIV_rate_yr[j]
 rate_LL[, , 2] <- m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] +
-  pDs * IRR[i] + age_rate[j] + ART_rate_yr[j]
-rate_LL[, , 3] <- m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] + age_rate[j]
+  pDs * IRR[i] * Hirr[2] + age_rate[j] + ART_rate_yr[j]
+rate_LL[, , 3] <- m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] * Hirr[3] + age_rate[j]
 Nevents_LL[, , ] <- rbinom(LL[i, j, k], 1 - exp(-rate_LL[i, j, k] * dt))
 
 
@@ -685,30 +699,30 @@ age_out_LL[, , ] <- rbinom(Nevents_LL[i, j, k], p_LLage[i, j, k])
 
 ## b) HIV INFECTION
 p_LLHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] +
-                      pDs * IRR[i] + HIV_rate_yr[j] > tol)
+                      pDs * IRR[i] * Hirr[1] + HIV_rate_yr[j] > tol)
                     HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] +
-                                      pDs * IRR[i] + HIV_rate_yr[j]) else 0
+                                      pDs * IRR[i] * Hirr[1] + HIV_rate_yr[j]) else 0
 p_LLHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] +
-                      pDs * IRR[i] + ART_rate_yr[j] > tol)
+                      pDs * IRR[i] * Hirr[2] + ART_rate_yr[j] > tol)
                     ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] +
-                                      pDs * IRR[i] + ART_rate_yr[j]) else 0
+                                      pDs * IRR[i] * Hirr[2] + ART_rate_yr[j]) else 0
 p_LLHIV[, , 3] <- 0
 HIV_out_LL[, , ] <- rbinom(Nevents_LL[i, j, k] - age_out_LL[i, j, k], p_LLHIV[i, j, k])
 
 
 ## c) TB INFECTION
 p_LLinfs[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] +
-                       v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i] > tol)
+                       v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i] * Hirr[1] > tol)
                      v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_noHIV_t[j] +
-                                                   v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i]) else 0
+                                                   v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i] * Hirr[1]) else 0
 p_LLinfs[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] +
-                       v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i] > tol)
+                       v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i] * Hirr[2] > tol)
                      v * foi[i] * TB_HIV_mod[2] / (m_in_t[j] + mu_HIV_t[j] +
-                                                   v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i]) else 0
+                                                   v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i] * Hirr[2]) else 0
 p_LLinfs[, , 3] <- if (m_in_t[j] + mu_ART_t[j] +
-                       v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] > tol)
+                       v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] * Hirr[3] > tol)
                      v * foi[i] * TB_HIV_mod[3] / (m_in_t[j] + mu_ART_t[j] +
-                                                   v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i]) else 0
+                                                   v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] * Hirr[3]) else 0
 LLinfs[, , ] <- rbinom(
   Nevents_LL[i, j, k] - age_out_LL[i, j, k] - HIV_out_LL[i, j, k],
   p_LLinfs[i, j, k]
@@ -716,15 +730,15 @@ LLinfs[, , ] <- rbinom(
 
 
 ## d) SLOW PROGRESSION
-p_progSlow[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDs * IRR[i] > tol)
-                       IRR[i] * pDs /
-                         (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i]) else 0
-p_progSlow[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDs * IRR[i] > tol)
-                       IRR[i] * pDs /
-                         (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i]) else 0
-p_progSlow[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDs * IRR[i] > tol)
-                       IRR[i] * pDs /
-                         (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i]) else 0
+p_progSlow[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDs * IRR[i] * Hirr[1] > tol)
+                       IRR[i] * pDs * Hirr[1]/
+                         (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDs * IRR[i] * Hirr[1]) else 0
+p_progSlow[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDs * IRR[i] * Hirr[2] > tol)
+                       IRR[i] * pDs * Hirr[2] /
+                         (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDs * IRR[i] * Hirr[2]) else 0
+p_progSlow[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDs * IRR[i] * Hirr[3] > tol)
+                       IRR[i] * pDs * Hirr[3]/
+                         (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDs * IRR[i] * Hirr[3]) else 0
 progSlow[, , ] <- rbinom(
   Nevents_LL[i, j, k] - age_out_LL[i, j, k] - HIV_out_LL[i, j, k] - LLinfs[i, j, k],
   p_progSlow[i, j, k]
@@ -1076,9 +1090,9 @@ HIV_in_R[,,2:HIV_dims] <- HIV_out_R[i,j,k-1]
 HIV_in_R[,,1]<-0
 
 ###### RECOVERED: EXIT EVENTS #####
-rate_R[, , 1] <- m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] + age_rate[j] + HIV_rate_yr[j]
-rate_R[, , 2] <- m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] + age_rate[j] + ART_rate_yr[j]
-rate_R[, , 3] <- m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] + age_rate[j]
+rate_R[, , 1] <- m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] * Hirr[1] + age_rate[j] + HIV_rate_yr[j]
+rate_R[, , 2] <- m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] + age_rate[j] + ART_rate_yr[j]
+rate_R[, , 3] <- m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3] + age_rate[j]
 Nevents_R[, , ] <- rbinom(R[i, j, k], 1 - exp(-rate_R[i, j, k] * dt))
 
 
@@ -1088,8 +1102,8 @@ age_out_R[, , ] <- rbinom(Nevents_R[i, j, k], p_Rage[i, j, k])
 
 
 ## b) HIV rate
-p_RHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] + HIV_rate_yr[j] > tol) HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] + HIV_rate_yr[j]) else 0
-p_RHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] + ART_rate_yr[j] > tol) ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] + ART_rate_yr[j]) else 0
+p_RHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] * Hirr[1] + HIV_rate_yr[j] > tol) HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] * Hirr[1] + HIV_rate_yr[j]) else 0
+p_RHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] + ART_rate_yr[j] > tol) ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] + ART_rate_yr[j]) else 0
 p_RHIV[, , 3] <- 0
 HIV_out_R[, , ] <- rbinom(
   Nevents_R[i, j, k] - age_out_R[i, j, k],
@@ -1098,9 +1112,9 @@ HIV_out_R[, , ] <- rbinom(
 
 
 ## c) REINFECTION
-p_Rinfs[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i]) else 0
-p_Rinfs[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i]) else 0
-p_Rinfs[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i]) else 0
+p_Rinfs[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] * Hirr[1] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i]* Hirr[1]) else 0
+p_Rinfs[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2]) else 0
+p_Rinfs[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3]) else 0
 Rinfs[, , ] <- rbinom(
   Nevents_R[i, j, k] - age_out_R[i, j, k] - HIV_out_R[i, j, k],
   p_Rinfs[i, j, k]
@@ -1108,9 +1122,9 @@ Rinfs[, , ] <- rbinom(
 
 
 ## d) RELAPSE
-p_relapse[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDr * IRR[i] > tol) IRR[i] * pDr / (m_in_t[j] + mu_noHIV_t[j] + pDr * IRR[i]) else 0
-p_relapse[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDr * IRR[i] > tol) IRR[i] * pDr / (m_in_t[j] + mu_HIV_t[j] + pDr * IRR[i]) else 0
-p_relapse[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDr * IRR[i] > tol) IRR[i] * pDr / (m_in_t[j] + mu_ART_t[j] + pDr * IRR[i]) else 0
+p_relapse[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + pDr * IRR[i] * Hirr[1] > tol) IRR[i] * pDr * Hirr[1] / (m_in_t[j] + mu_noHIV_t[j] + pDr * IRR[i] * Hirr[1]) else 0
+p_relapse[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + pDr * IRR[i] * Hirr[2] > tol) IRR[i] * pDr * Hirr[2] / (m_in_t[j] + mu_HIV_t[j] + pDr * IRR[i] * Hirr[2]) else 0
+p_relapse[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + pDr * IRR[i] * Hirr[3] > tol) IRR[i] * pDr * Hirr[3] / (m_in_t[j] + mu_ART_t[j] + pDr * IRR[i] * Hirr[3]) else 0
 relapse[, , ] <- rbinom(
   Nevents_R[i, j, k] - age_out_R[i, j, k] - HIV_out_R[i, j, k] - Rinfs[i, j, k],
   p_relapse[i, j, k]
