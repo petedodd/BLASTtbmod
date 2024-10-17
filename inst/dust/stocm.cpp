@@ -24,6 +24,7 @@ __host__ __device__ real_type odin_sum3(const container x, int from_i, int to_i,
 // [[dust::param(Hirr, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(HIV_dims, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(HIV_int, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
+// [[dust::param(initD, has_default = FALSE, default_value = NULL, rank = 2, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(IRR, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(m_in_int, has_default = FALSE, default_value = NULL, rank = 2, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(MM, has_default = FALSE, default_value = NULL, rank = 2, min = -Inf, max = Inf, integer = FALSE)]]
@@ -3720,7 +3721,6 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.init_SC = std::vector<real_type>(shared->dim_init_SC);
   internal.init_Tr = std::vector<real_type>(shared->dim_init_Tr);
   internal.init_U = std::vector<real_type>(shared->dim_init_U);
-  shared->initD = std::vector<real_type>(shared->dim_initD);
   shared->initDenom = std::vector<real_type>(shared->dim_initDenom);
   shared->initF = std::vector<real_type>(shared->dim_initF);
   shared->initial_bg_deaths = std::vector<real_type>(shared->dim_bg_deaths);
@@ -3825,6 +3825,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.U_inmigr = std::vector<real_type>(shared->dim_U_inmigr);
   internal.Udeaths = std::vector<real_type>(shared->dim_Udeaths);
   internal.Uinfs = std::vector<real_type>(shared->dim_Uinfs);
+  shared->initD = user_get_array_fixed<real_type, 2>(user, "initD", shared->initD, {shared->dim_initD_1, shared->dim_initD_2}, NA_REAL, NA_REAL);
   for (int i = 1; i <= shared->dim_bg_deaths_1; ++i) {
     for (int j = 1; j <= shared->dim_bg_deaths_2; ++j) {
       for (int k = 1; k <= shared->dim_bg_deaths_3; ++k) {
@@ -3892,11 +3893,6 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   for (int i = 1; i <= shared->dim_initF_1; ++i) {
     for (int j = 1; j <= shared->dim_initF_2; ++j) {
       shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] > shared->tol ? (1 - dust::math::exp(- 2 * shared->ari0)) / (real_type) shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] : 0);
-    }
-  }
-  for (int i = 1; i <= shared->dim_initD_1; ++i) {
-    for (int j = 1; j <= shared->dim_initD_2; ++j) {
-      shared->initD[i - 1 + shared->dim_initD_1 * (j - 1)] = shared->dur * (shared->initF[shared->dim_initF_1 * (j - 1) + i - 1] * (shared->pDf - shared->pDs) + shared->pDs);
     }
   }
   for (int i = 1; i <= shared->dim_initDenom_1; ++i) {
