@@ -14,17 +14,17 @@ plot_compare_demog(
 )
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{n_chain_steps}{}
+\item{n_chain_steps}{chain step}
 
-\item{start_year}{}
+\item{start_year}{start year}
 
-\item{years}{}
+\item{years}{number of years}
 
-\item{eps}{}
+\item{eps}{UI width}
 
-\item{by_comp}{}
+\item{by_comp}{plot type}
 }
 \value{
 ggplot2

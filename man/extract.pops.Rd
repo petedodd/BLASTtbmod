@@ -7,11 +7,11 @@
 extract.pops(Y, chain_step_num = 1, out_type = "N")
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{chain_step_num}{}
+\item{chain_step_num}{chain step}
 
-\item{out_type}{}
+\item{out_type}{output type}
 }
 \value{
 data.table

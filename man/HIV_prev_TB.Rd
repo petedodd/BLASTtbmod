@@ -7,13 +7,13 @@
 HIV_prev_TB(Y, chain_step_num = 1, separate = FALSE, prev = "ht")
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{chain_step_num}{}
+\item{chain_step_num}{chain step}
 
-\item{separate}{}
+\item{separate}{separate plots?}
 
-\item{prev}{}
+\item{prev}{prevalence type?}
 }
 \value{
 ggplot2

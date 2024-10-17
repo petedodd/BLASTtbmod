@@ -4,9 +4,9 @@
 ##'
 ##' TODO
 ##' @title Postprocess model output
-##' @param Y 
-##' @param chain_step_num 
-##' @param out_type 
+##' @param Y input data
+##' @param chain_step_num chain step
+##' @param out_type output type
 ##' @return data.table
 ##' @author Pete Dodd
 ##' @import data.table
@@ -42,9 +42,9 @@ extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
 ##'
 ##' TODO check chains or particles?
 ##' @title Postprocess model outputs for multiple chains
-##' @param Y 
-##' @param n_chain_steps 
-##' @param out_type 
+##' @param Y input data
+##' @param n_chain_steps chain step
+##' @param out_type output type
 ##' @return data.table
 ##' @author Pete Dodd
 ##' @import data.table
@@ -85,12 +85,12 @@ extract.pops.multi <- function( Y, n_chain_steps = 100, out_type = 'N' ){
 ##'
 ##' TODO
 ##' @title Plot comparing total populations
-##' @param Y 
-##' @param n_chain_steps 
-##' @param start_year 
-##' @param years 
-##' @param eps 
-##' @param by_comp 
+##' @param Y input data
+##' @param n_chain_steps chain step
+##' @param start_year start year
+##' @param years number of years
+##' @param eps UI width
+##' @param by_comp plot type
 ##' @return ggplot2
 ##' @author Pete Dodd
 ##' @import data.table
@@ -172,13 +172,14 @@ plot_compare_demog <- function(Y,
 # Data md7 must be in env
 #' 
 #' @title Plot average notification rates & compare with real data
-#' @param Y 
-#' @param n_chain_steps 
-#' @param agrgt_by 
+#' @param Y input data
+#' @param n_chain_steps chain steps
+#' @param agrgt_by aggregate by
 #' @return ggplot2
 #' @import data.table
 #' @import ggplot2
-#' @import dplyr
+#' @importFrom dplyr group_by summarise across all_of
+#' @importFrom magrittr %>%
 #' @export
 plot_compare_noterate_agrgt <- function( Y, 
                                          n_chain_steps = 100,
@@ -227,13 +228,14 @@ plot_compare_noterate_agrgt <- function( Y,
 # Defaults to chain_step 1, total population, aggregates over compartments
 #' @title Plot selected populations/compartments over time (absolute numbers, no comparison w/real data)
 #'
-#' @param Y 
-#' @param chain_step_num 
-#' @param out_type 
-#' @param by_comp 
-#' @import dplyr
+#' @param Y input data
+#' @param chain_step_num chain step
+#' @param out_type output type
+#' @param by_comp comparison type
+#' @importFrom dplyr group_by summarise across all_of
 #' @import ggplot2
-#' @import ggh4x
+#' @importFrom ggh4x facet_grid2
+#' @importFrom magrittr %>%
 #' @return ggplot2
 #' @export
 
@@ -327,11 +329,11 @@ plot_pops_dynamic <- function( Y,
 ##'
 ##' TODO
 ##' @title HIV by time
-##' @param Y 
-##' @param start_year 
-##' @param chain_step_num 
-##' @param out_type 
-##' @param by_age 
+##' @param Y input data
+##' @param start_year start year
+##' @param chain_step_num chain step
+##' @param out_type output type
+##' @param by_age by age or not
 ##' @return ggplot
 ##' @author Pete Dodd
 ##' @import ggplot2
@@ -390,10 +392,10 @@ plot_HIV_dynamic <- function( Y, start_year, chain_step_num=1, out_type='N', by_
 ##'
 ##' TODO
 ##' @title HIV snapshot
-##' @param Y 
-##' @param chain_step_num 
-##' @param out_type 
-##' @param timestep 
+##' @param Y input data
+##' @param chain_step_num chain step
+##' @param out_type output type
+##' @param timestep timestep for snapshot
 ##' @return ggplot
 ##' @author Pete Dodd
 ##' @export
@@ -424,15 +426,15 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 
 ## TB incidence by time
 #' @title Plot sample TB incidence 
-#' @param Y 
-#' @param chain_step_num 
-#' @param out_type 
-#' @param separate 
-#' @param by_age 
+#' @param Y input data
+#' @param chain_step_num chain step number
+#' @param out_type output type
+#' @param separate separate plot?
+#' @param by_age by age?
 #' @return ggplot2
-#' @export 
-#' @import ggplot2
-#' @import ggh4x
+#' @import data.table
+#' @importFrom ggh4x facet_grid2
+#' @export
 plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=F){
   
   D <- extract.pops( Y, chain_step_num, out_type )
@@ -468,12 +470,14 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
 ## Choose to separate HIV into ART+/- or not
 ## Currently works for single particle/chain step.... add variation over chain??
 #' @title Plot HIV prevalence among TB notifications#'
-#' @param Y 
-#' @param chain_step_num 
-#' @param separate 
-#' @param prev 
-#' @import plyr
-#' @import tidyverse
+#' @param Y input data 
+#' @param chain_step_num chain step
+#' @param separate separate plots?
+#' @param prev prevalence type?
+#' @importFrom dplyr filter group_by summarise ungroup
+#' @importFrom tidyr complete
+#' @importFrom plyr mapvalues
+#' @importFrom ggh4x facet_grid2
 #' @return ggplot2
 #' @export 
 HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){

@@ -12,4 +12,5 @@ Imports:
     data.table,
     dust,
     ggplot2,
+    magrittr,
     mcstate
