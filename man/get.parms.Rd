@@ -6,6 +6,11 @@
 \usage{
 get.parms(start_year, years)
 }
+\arguments{
+\item{start_year}{Earliest year of simulation}
+
+\item{years}{N years in simulation}
+}
 \value{
 list
 }
