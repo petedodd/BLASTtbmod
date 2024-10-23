@@ -25,8 +25,10 @@ initPrev[,] <- 1-exp( -ari0*ageMids[j] )             #LTBI
 
 ## fraction TBI initially R or LR: as ~2 year's of FOI/TBI
 initF[,] <- if(initPrev[i,j]>tol) (1-exp(-2*ari0)) / initPrev[i,j] else 0
+
 ## Initial ratio of TBI to disease states
-initD[,] <- dur*( initF[i,j]*(pDf-pDs) + pDs )
+initD[,] <- user() #NOTE now taken as input: note mix of D,SC,Tr,R below
+
 initLL[,] <- 1.0 #basically rest given denom
 initDenom[,] <- initF[i,j] + initLL[i,j] + initD[i,j]
 tbi_LR[,] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
@@ -46,7 +48,8 @@ init_SC[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_SC[i,j])
 init_Tr[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_Tr[i,j])
 init_R[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_R[i,j])
 
-
+## TODO this will need changing to account for HIV split:
+## less burnin than plannedw
 
 initial(U[,,1]) <- init_U[i,j]
 initial(U[,,2:3]) <- 0

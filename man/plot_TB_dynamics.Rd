@@ -13,15 +13,15 @@ plot_TB_dynamics(
 )
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{chain_step_num}{}
+\item{chain_step_num}{chain step number}
 
-\item{out_type}{}
+\item{out_type}{output type}
 
-\item{separate}{}
+\item{separate}{separate plot?}
 
-\item{by_age}{}
+\item{by_age}{by age?}
 }
 \value{
 ggplot2

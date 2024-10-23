@@ -82,6 +82,10 @@ get.parms <- function(start_year, years) {
   mu_ART_int <- mu_noHIV_int
   mu_HIV_int <- mu_noHIV_int
 
+  ## initial state for 'disease'
+  Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
+  Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for children TODO check parms for infectiousness
+
   ## Set up list to pass to model
   parms <- list(
     dt = dt,
@@ -96,6 +100,7 @@ get.parms <- function(start_year, years) {
     age_rate = c(1 / 15, 1 / 35, 1e-6),
     agefracs = age.frax, # initial age fractions
     ageMids = c(15 / 2, (15 + 50) / 2, 60),
+    initD = Dinit, #initial state
     births_int = births_int,
     HIV_int = HIV_int,
     ART_int = ART_int,

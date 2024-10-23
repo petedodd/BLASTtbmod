@@ -13,15 +13,15 @@ plot_HIV_dynamic(
 )
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{start_year}{}
+\item{start_year}{start year}
 
-\item{chain_step_num}{}
+\item{chain_step_num}{chain step}
 
-\item{out_type}{}
+\item{out_type}{output type}
 
-\item{by_age}{}
+\item{by_age}{by age or not}
 }
 \value{
 ggplot

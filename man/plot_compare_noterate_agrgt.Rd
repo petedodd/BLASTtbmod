@@ -7,11 +7,11 @@
 plot_compare_noterate_agrgt(Y, n_chain_steps = 100, agrgt_by = c("patch"))
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{n_chain_steps}{}
+\item{n_chain_steps}{chain steps}
 
-\item{agrgt_by}{}
+\item{agrgt_by}{aggregate by}
 }
 \value{
 ggplot2

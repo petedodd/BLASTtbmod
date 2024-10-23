@@ -7,11 +7,11 @@
 extract.pops.multi(Y, n_chain_steps = 100, out_type = "N")
 }
 \arguments{
-\item{Y}{}
+\item{Y}{input data}
 
-\item{n_chain_steps}{}
+\item{n_chain_steps}{chain step}
 
-\item{out_type}{}
+\item{out_type}{output type}
 }
 \value{
 data.table
