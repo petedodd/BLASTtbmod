@@ -4,7 +4,7 @@
 \alias{HIV_prev_TB}
 \title{Plot HIV prevalence among TB notifications#'}
 \usage{
-HIV_prev_TB(Y, chain_step_num = 1, separate = FALSE, prev = "ht")
+HIV_prev_TB(Y, chain_step_num = 1, separate = FALSE, prev = "pc")
 }
 \arguments{
 \item{Y}{input data}

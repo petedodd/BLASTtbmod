@@ -480,7 +480,7 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
 #' @importFrom ggh4x facet_grid2
 #' @return ggplot2
 #' @export 
-HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){
+HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='pc' ){
   
   D <- extract.pops( Y, chain_step_num, out_type='notes' )
   real_dat <- BLASTtbmod::TB_notes_HIV_patch
@@ -520,7 +520,6 @@ HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){
   real_out <- merge( real_out, real_notes, by='patch', all.x = T )
   real_out$prev_pc <- real_out$tot/real_out$grandtot*100
   real_out$prev_ht <- real_out$tot/real_out$grandtot*1e5
-  real_out <- real_out[ -which( real_out$hiv == 'Unknown'),]  # Remove unknowns for plotting ()
   real_out$dat_type <- 'Real data'
   
   plotdat <- rbind( D_out, real_out )
