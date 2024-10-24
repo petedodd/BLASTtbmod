@@ -472,42 +472,51 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
 #' @title Plot HIV prevalence among TB notifications#'
 #' @param Y input data 
 #' @param chain_step_num chain step
-#' @param separate separate plots?
-#' @param prev prevalence type?
+#' @param separate separate HIV by ART status
 #' @importFrom dplyr filter group_by summarise ungroup
 #' @importFrom tidyr complete
 #' @importFrom plyr mapvalues
 #' @importFrom ggh4x facet_grid2
 #' @return ggplot2
 #' @export 
-HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){
+HIV_prev_TB <- function( Y, n_chain_steps = 100, separate=FALSE ){
   
-  D <- extract.pops( Y, chain_step_num, out_type='notes' )
+  D <- extract.pops.multi( Y, n_chain_steps, out_type='notes' )
   real_dat <- BLASTtbmod::TB_notes_HIV_patch
 
   if( separate == FALSE ){
-    D$hiv <- plyr::mapvalues( D$hiv, 
-                               from = c( 'HIV+/ART-', 'HIV+/ART+'),
-                               to = c( 'HIV+', 'HIV+'))
+    aggD$hiv <- plyr::mapvalues( aggD$hiv, 
+                                 from = c( 'HIV+/ART-', 'HIV+/ART+'),
+                                 to = c( 'HIV+', 'HIV+'))
     real_dat$hiv <- plyr::mapvalues( real_dat$hiv, 
                                      from = c( 'HIV+/ART-', 'HIV+/ART+'),
                                      to = c( 'HIV+', 'HIV+'))
+    replen <- 2
+  } else {
+    replen <- 3
   }
   
-  D_out <- D %>%
-    dplyr::filter( value > 0 ) %>%
-    dplyr::group_by( patch, hiv ) %>%
-    dplyr::summarise( tot = sum(value)) %>%
-    dplyr::ungroup() %>%
-    tidyr::complete(patch, hiv, fill=list(sum_quantity=0))
-  D_notes <- D_out %>%
-    dplyr::group_by( patch ) %>%
-    dplyr::summarise( grandtot = sum( tot, na.rm=T ))
-  D_out <- merge( D_out, D_notes, by='patch', all.x = T )
-  D_out$prev_pc <- D_out$tot/D_out$grandtot*100
-  D_out$prev_ht <- D_out$tot/D_out$grandtot*1e5
-  D_out$dat_type <- 'Simulated data'
+  # Aggregate over appropriate compartments
+  aggD <- D %>%
+    dplyr::group_by( patch, hiv, chain_step ) %>%
+    dplyr::summarise( tot_notes = sum(notes)) %>%
+    data.table::as.data.table()
   
+  # Calculate prevalence
+  D_notes <- aggD %>%
+    dplyr::group_by( patch, chain_step ) %>%
+    dplyr::summarise( grandtot = sum( tot_notes, na.rm=T ))
+  D_out <- merge( aggD, D_notes, by=c( 'patch', 'chain_step' ), all.x = T )
+  D_out$prev_pc <- D_out$tot_notes/D_out$grandtot*100
+
+  # Generate ribbon
+  eps = 0.25
+  D_out <- D_out[ ,.( midpc=median( prev_pc ),
+                    lopc = quantile( prev_pc, eps ),
+                    hipc = quantile( prev_pc, 1-eps )),
+                by=.( hiv, patch ) ]
+  
+  # Wrangle real data
   real_out <- real_dat %>%
     dplyr::filter( total > 0 ) %>%
     dplyr::group_by( patch, hiv ) %>%
@@ -518,28 +527,30 @@ HIV_prev_TB <- function( Y, chain_step_num=1, separate=FALSE, prev='ht' ){
     dplyr::group_by( patch ) %>%
     dplyr::summarise( grandtot = sum( tot, na.rm=T ))
   real_out <- merge( real_out, real_notes, by='patch', all.x = T )
-  real_out$prev_pc <- real_out$tot/real_out$grandtot*100
-  real_out$prev_ht <- real_out$tot/real_out$grandtot*1e5
-  real_out <- real_out[ -which( real_out$hiv == 'Unknown'),]  # Remove unknowns for plotting ()
-  real_out$dat_type <- 'Real data'
+  real_out$prev_pc_real <- real_out$tot/real_out$grandtot*100
+
+  D_out <- merge( D_out, real_out[ , c( 'patch', 'hiv', 'prev_pc_real')],
+                  by=c( 'patch', 'hiv'), )
+  D_out$patch <- substr( D_out$patch, 7,7 )
+  D_out$pad_hi <- sapply( 1:nrow( D_out ), function(x) min( D_out$hipc[x] + 5,
+                                                            D_out$prev_pc_real + 5, 100 ))
+  D_out$pad_lo <- sapply( 1:nrow( D_out ), function(x) max( D_out$lopc[x] - 5,
+                                                            D_out$prev_pc_real - 5, 0 ))
   
-  plotdat <- rbind( D_out, real_out )
-  if( prev == 'ht' ){
-    titletext <- 'HIV prevalence (per 100,000) among TB notifications'
-    yval <- 'prev_ht'
-  } else {
-    if( prev == 'pc' ){
-      titletext <- 'HIV prevalence (%) among TB notifications'
-      yval <- 'prev_pc'
-    }
-  }
   
-  ggplot2::ggplot( plotdat, aes( x=patch, y=.data[[yval]], fill=hiv )) +
-    ggplot2::geom_bar(stat='identity', position = 'dodge')+
-    ggplot2::theme(legend.position = 'none',
-                   axis.title = element_blank())+
-    ggplot2::ggtitle( titletext )+
-    ggh4x::facet_grid2( hiv~dat_type )
+  p <- ggplot2::ggplot( D_out, aes( x=patch, y = midpc )) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbar( aes(ymin = lopc, ymax = hipc), width=0.4 ) +
+    ggplot2::geom_blank( aes( x=patch, y=pad_lo ))+
+    ggplot2::geom_blank( aes( x=patch, y=pad_hi ))+
+    ggh4x::facet_grid2( ~hiv, 
+                        independent = T,
+                        scales = 'free') +
+    ggplot2::geom_point( aes( y = prev_pc_real ), col = 2, shape = 16 ) +
+    ggplot2::ylab( "HIV status among TB notifications (%)" ) +
+    ggplot2::xlab("Patch") +
+    ggplot2::ggtitle("Real data (red), median + 50% PI simulated (black)")
+  print(p)
 }
 
 
