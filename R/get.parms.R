@@ -2,8 +2,8 @@
 ##'
 ##' TODO
 ##' @title Create parameter object
-##' @param start_year TODO
-##' @param years TODO
+##' @param start_year Earliest year of simulation
+##' @param years N years in simulation
 ##' @return list
 ##' @author Pete Dodd
 ##' @export

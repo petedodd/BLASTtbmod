@@ -4,16 +4,14 @@
 \alias{HIV_prev_TB}
 \title{Plot HIV prevalence among TB notifications#'}
 \usage{
-HIV_prev_TB(Y, chain_step_num = 1, separate = FALSE, prev = "ht")
+HIV_prev_TB(Y, n_chain_steps = 100, separate = FALSE)
 }
 \arguments{
 \item{Y}{input data}
 
+\item{separate}{separate HIV by ART status}
+
 \item{chain_step_num}{chain step}
-
-\item{separate}{separate plots?}
-
-\item{prev}{prevalence type?}
 }
 \value{
 ggplot2
