@@ -6,6 +6,11 @@
 \usage{
 get.parms(start_year, years)
 }
+\arguments{
+\item{start_year}{TODO}
+
+\item{years}{TODO}
+}
 \value{
 list
 }

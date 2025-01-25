@@ -186,7 +186,14 @@ MM[,] <- user()           # Mixing matrix
 relinf <- user(1)         # Relative infectiousness of SC relative to CD
 IRR[] <- user()
 
-initial(cum_inf_flux[, ]) <- 0 #initialize cumulative fluxes
+## flux variables
+initial(cum_inf_flux[, ]) <- 0 # initialize cumulative fluxes
+initial(cum_note_flux[, ]) <- 0 # initialize cumulative fluxes
+initial(Tijk[, , ]) <- 0
+initial(Sij[, ]) <- 0
+
+
+
 
 
 ## TODO TB_HIV_mod acts only on infection: need HIV specific progression
@@ -412,8 +419,17 @@ dim(tbi_R) <- c( patch_dims, age_dims )
 
 ## flux variables
 dim(InfsByPatchPatch) <- c(patch_dims, patch_dims)
+dim(NotesByPatchPatch) <- c(patch_dims, patch_dims)
 dim(InfsByPatch) <- c(patch_dims)
+dim(NotesByPatch) <- c(patch_dims)
 dim(cum_inf_flux) <- c(patch_dims, patch_dims)
+dim(cum_note_flux) <- c(patch_dims, patch_dims)
+dim(A) <- 6
+dim(zk) <- 6
+dim(Tijk) <- c(patch_dims, patch_dims, 6)
+dim(Sij) <- c(patch_dims, patch_dims)
+dim(ellij) <- c(patch_dims, patch_dims)
+dim(elli) <- c(patch_dims)
 
 
 ##########
@@ -587,6 +603,9 @@ Udeaths[, , ] <- Nevents_U[i, j, k] - age_out_U[i, j, k] - HIV_out_U[i, j, k] - 
 InfsByPatch[] <- sum(Uinfs[i, , ]) # number of infections in patch i this step
 InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol))
 update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
+NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
+NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], ellij[i, j] / (elli[i] + tol))
+update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
 
 ##############################
 ##### 2: Infected early ######
@@ -1169,3 +1188,68 @@ update(tot_incidence) <- sum(progFast[,,]) + sum(progSlow[,,]) + sum(relapse[,,]
 ## #########################
 ## test variables
 update(beta_test) <- beta_test #constant at initial value passed in
+
+
+
+## =========== flux approximation calculations
+update(Tijk[,,]) <- exp(-zk[k]) * Tijk[i,j,k] + InfsByPatchPatch[i, j]
+update(Sij[, ]) <- exp(-zk[1]) * (Tijk[i, j, 1] + Sij[i,j ])
+
+## \ell_{ij}(t) = \sum_{s=1}^t\Lambda_{ij}(t-s)p(s)
+ellij[, ] <- A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + A[3] * Tijk[i, j, 3] + A[4] * Tijk[i, j, 4] + A[5] * Tijk[i, j, 5] + A[6] * Tijk[i, j, 6]
+elli[] <- sum(ellij[i, ]) #safety
+
+
+## parameter mapping CHECK
+## NOTES -> model
+## omega  :  1/dur      #tb cessation
+## delta  :  dtct_rate  #detection rate
+## mu     :  mu_noHIV_int[2:age_dims,1:sim_length] #mortality
+## sigma  :  pLL #stabilisation
+## alpha  :  pDf #fast progression
+## epsilon:  pDs #slow progn
+## gamma  :  progress_rate-regress_rate #symptom progn
+## rho    :  pDr  #relapse rate
+## tau    :  1/t_dur    #1/treatment dur
+Pomega  <-  1/dur      #tb cessation
+Pdelta  <-  dtct_rate  #detection rate
+Pmu     <-  mu_noHIV_int[2,1] #mortality: TODO possible to make mean?
+Psigma  <-  pLL #stabilisation
+Palpha  <-  pDf #fast progression
+Pepsilon<-  pDs #slow progn
+Pgamma  <-  progress_rate-regress_rate #symptom progn
+Prho    <-  pDr  #relapse rate
+Ptau    <-  1/t_dur    #1/treatment dur
+
+
+## z coeffs
+zk[1] <- Pomega + Pdelta + Pmu # om
+zk[2] <- Psigma + Palpha + Pmu # sam
+zk[3] <- Pepsilon + Pmu # em
+zk[4] <- Pgamma + Pmu # gm
+zk[5] <- Prho + Pmu # rr
+zk[6] <- Ptau + Pmu # tm
+
+## A coeffs
+A0 <- Prho * Ptau * (ppJ /((Prho-Pomega-Pdelta)*(Ptau-Pomega-Pdelta)))
+A[1] <- -Pgamma * ppC /((Pgamma-Psigma-Palpha)*(Pomega+Pdelta-Psigma-Palpha)) + Pgamma * ppB /((Pgamma-Pepsilon)*(Pomega+Pdelta-Pepsilon)) -  Pgamma * (ppB/(Pgamma-Pepsilon)-ppC/(Pgamma-Psigma-Palpha))  / (Pomega+Pdelta-Pgamma)- Prho * Ptau * (ppF*(1/(Pomega+Pdelta-Psigma-Palpha)-1/(Pomega+Pdelta-Prho))/((Prho-Psigma-Palpha)*(Ptau-Psigma-Palpha))+ppG*(1/(Pomega+Pdelta-Pepsilon)-1/(Pomega+Pdelta-Prho))/((Prho-Pepsilon)*(Ptau-Pepsilon)) + ppH*(1/(Pomega+Pdelta-Pgamma)-1/(Pomega+Pdelta-Prho))/((Prho-Pgamma)*(Ptau-Pgamma)) + ppJ*(-1/(Pomega+Pdelta-Prho))/((Prho-Pomega-Pdelta)*(Ptau-Pomega-Pdelta))+ ppK *(1/(Pomega+Pdelta-Ptau)-1/(Pomega+Pdelta-Prho))/(Prho-Ptau))
+A[2] <- Pgamma * ppC /((Pgamma-Psigma-Palpha)*(Pomega+Pdelta-Psigma-Palpha)) + Prho * Ptau * (ppF/(Pomega+Pdelta-Psigma-Palpha))/((Prho-Psigma-Palpha)*(Ptau-Psigma-Palpha))
+A[3] <- - Pgamma * ppB /((Pgamma-Pepsilon)*(Pomega+Pdelta-Pepsilon)) + Prho * Ptau *  ( ppG/(Pomega+Pdelta-Pepsilon))/((Prho-Pepsilon)*(Ptau-Pepsilon))
+A[4] <- Pgamma * (ppB/(Pgamma-Pepsilon)-ppC/(Pgamma-Psigma-Palpha))/ (Pomega+Pdelta-Pgamma) + Prho * Ptau * (ppH/(Pomega+Pdelta-Pgamma) )/ ((Prho-Pgamma)*(Ptau-Pgamma))
+A[5] <- -Prho * Ptau * ( ppF/((Prho-Psigma-Palpha)*(Ptau-Psigma-Palpha)) + ppG/ ((Prho-Pepsilon)*(Ptau-Pepsilon)) + ppH/((Prho-Pgamma)*(Ptau-Pgamma)) + ppJ/((Prho-Pomega-Pdelta)*(Ptau-Pomega-Pdelta)) + ppK/(Prho-Ptau) )/(Pomega+Pdelta-Prho)
+A[6] <- Prho * Ptau * ((ppK / (Pomega + Pdelta - Ptau)) / (Prho - Ptau))
+
+## interim variables
+ppB <- Pepsilon * Psigma / (Pepsilon - Psigma - Palpha)
+ppC <- ppB + Palpha
+ppF <- Pdelta * Pgamma * ppC / ((Pgamma - Psigma - Palpha) * (Pomega + Pdelta - Psigma - Palpha))
+ppG <- -Pdelta * Pgamma * ppB / ((Pgamma - Pepsilon) * (Pomega + Pdelta - Pepsilon))
+ppH <- Pdelta * Pgamma * (ppB / (Pgamma - Pepsilon) - ppC / (Pgamma - Psigma - Palpha)) / (Pomega + Pdelta - Pgamma)
+ppJ <- Pdelta * Pgamma * (ppC * (1 / (Pomega + Pdelta - Pgamma) - 1 / (Pomega + Pdelta - Psigma - Palpha)) / (Pgamma - Psigma - Palpha) + ppB * (1 / (Pomega + Pdelta - Pepsilon) - 1 / (Pomega + Pdelta - Pgamma)) / (Pgamma - Pepsilon))
+ppK <- -ppF / (Ptau - Psigma - Palpha) - ppG / (Ptau - Pepsilon) - ppH / (Ptau - Pgamma) - ppJ / (Ptau - Pomega - Pdelta)
+
+
+
+## TODO
+## CHECK normalization of p(t)
+## initial states (& check in document)
