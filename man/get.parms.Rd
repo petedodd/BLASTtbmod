@@ -4,12 +4,16 @@
 \alias{get.parms}
 \title{Create parameter object}
 \usage{
-get.parms(start_year, years)
+get.parms(start_year, years, Dinit, ari0)
 }
 \arguments{
 \item{start_year}{Earliest year of simulation}
 
 \item{years}{N years in simulation}
+
+\item{Dinit}{Matrix of initial prevalences}
+
+\item{ari0}{initial ARIs for initial state}
 }
 \value{
 list

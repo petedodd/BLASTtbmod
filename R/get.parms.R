@@ -4,12 +4,17 @@
 ##' @title Create parameter object
 ##' @param start_year Earliest year of simulation
 ##' @param years N years in simulation
+##' @param Dinit Matrix of initial prevalences
+##' @param ari0 initial ARIs for initial state
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
 ##' @import data.table
 ##' @import logitnorm
-get.parms <- function(start_year, years) {
+get.parms <- function(start_year,
+                      years,
+                      Dinit,
+                      ari0) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -83,8 +88,13 @@ get.parms <- function(start_year, years) {
   mu_HIV_int <- mu_noHIV_int
 
   ## initial state for 'disease'
-  Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
-  Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for children TODO check parms for infectiousness
+  if (missing(Dinit)) {
+    Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
+    Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for kids TODO check parms for infectiousness
+  }
+  if(missing(ari0)){ #TODO think about making vector?
+    ari0 <- qlnorm(0.5, log(2), 0.75)
+  }
 
   ## Set up list to pass to model
   parms <- list(
@@ -126,9 +136,7 @@ get.parms <- function(start_year, years) {
     dur = qlnorm(0.5, 1.1, 0.2), # Duration untreated TB - dur
     tfr = qbeta(0.5, 2.71, 87.55), # CFR treated TB - tfr (txf)
     cfr = qbeta(0.5, 25.48, 33.78), # CFR untreated TB - cfr (cfrn)
-    # ari0 = rlnorm( patch_dims, log(0.05), 1 )
-    ari0 = qlnorm(0.5, log(2), 0.75) # Initial condition parameter - ?? (ari0)
-    # ari0 = 1
+    ari0 = ari0 # Initial condition parameter - ?? (ari0)
   )
   return(parms)
 }

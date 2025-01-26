@@ -2,15 +2,15 @@
 ##'
 ##' TODO
 ##' @title Run PMCMC inference on particle filter
-##' @param particle.filter 
-##' @param parms 
-##' @param prior.list 
-##' @param initial.proposal.matrix 
-##' @param n.steps 
-##' @param n.burnin 
-##' @param n.chains 
-##' @param n.threads 
-##' @param n.epochs 
+##' @param particle.filter TODO
+##' @param parms  TODO
+##' @param prior.list  TODO
+##' @param initial.proposal.matrix  TODO
+##' @param n.steps  TODO
+##' @param n.burnin  TODO
+##' @param n.chains  TODO
+##' @param n.threads  TODO
+##' @param n.epochs  TODO
 ##' @return mcstate processed chains object
 ##' @author Pete Dodd
 ##' @import mcstate

@@ -18,13 +18,13 @@ create.particlefilter(
 
 \item{comparefun}{mcstate compare function (log likelihood)}
 
-\item{n_particles}{}
+\item{n_particles}{TODO}
 
-\item{n_threads}{}
+\item{n_threads}{TODO}
 
-\item{seed}{}
+\item{seed}{TODO}
 
-\item{...}{}
+\item{...}{TODO}
 }
 \value{
 mcstate particle filter

@@ -17,23 +17,23 @@ run.pmcmc(
 )
 }
 \arguments{
-\item{particle.filter}{}
+\item{particle.filter}{TODO}
 
-\item{parms}{}
+\item{parms}{TODO}
 
-\item{prior.list}{}
+\item{prior.list}{TODO}
 
-\item{initial.proposal.matrix}{}
+\item{initial.proposal.matrix}{TODO}
 
-\item{n.steps}{}
+\item{n.steps}{TODO}
 
-\item{n.burnin}{}
+\item{n.burnin}{TODO}
 
-\item{n.chains}{}
+\item{n.chains}{TODO}
 
-\item{n.threads}{}
+\item{n.threads}{TODO}
 
-\item{n.epochs}{}
+\item{n.epochs}{TODO}
 }
 \value{
 mcstate processed chains object

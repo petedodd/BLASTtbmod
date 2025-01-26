@@ -4,10 +4,10 @@
 ##' @title Create a particle filter
 ##' @param data must be mcstate particle filter data
 ##' @param comparefun mcstate compare function (log likelihood)
-##' @param n_particles 
-##' @param n_threads 
-##' @param seed 
-##' @param ... 
+##' @param n_particles  TODO
+##' @param n_threads  TODO
+##' @param seed  TODO
+##' @param ...  TODO
 ##' @return mcstate particle filter
 ##' @author Pete Dodd
 ##' @import mcstate
