@@ -430,6 +430,7 @@ dim(Tijk) <- c(patch_dims, patch_dims, 6)
 dim(Sij) <- c(patch_dims, patch_dims)
 dim(ellij) <- c(patch_dims, patch_dims)
 dim(elli) <- c(patch_dims)
+dim(Pellij) <- c(patch_dims, patch_dims)
 
 
 ##########
@@ -604,7 +605,10 @@ InfsByPatch[] <- sum(Uinfs[i, , ]) # number of infections in patch i this step
 InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol))
 update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
-NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], ellij[i, j] / (elli[i] + tol))
+## NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], ellij[i, j] / (elli[i] + tol))
+## Pellij[, ] <- if (elli[i] > tol && ellij[i, j] > tol) ellij[i, j] / elli[i] else 0
+Pellij[, ] <- foitemp[i, j] / (foi[i] + tol) #TODO BUG
+NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], Pellij[i, j])
 update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
 
 ##############################
