@@ -19,12 +19,16 @@ extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
   D <- data.table::as.data.table(Y[row.names(Y) %in% selnmz,
     chain_step_num, ,
     drop = TRUE
-  ])
-  D <- cbind(selnmz, D)
-  D <- data.table::transpose(D, make.names = "selnmz")
-  colnames(D) <- selnmz
-  D[, step := 1:nrow(D)]
-  D <- melt(D, id = "step")
+    ])
+  if (length(chain_step_num) == 1) {
+    D <- cbind(selnmz, D)
+    D <- data.table::transpose(D, make.names = "selnmz")
+    colnames(D) <- selnmz
+    D[, step := 1:nrow(D)]
+    D <- data.table::melt(D, id = "step")
+  } else {
+    names(D)[1:3] <- c("variable","particle","step")
+  }
   D[, c("patch", "acatno", "hivno") := data.table::tstrsplit(variable, split = ",")]
   D[, patch := as.integer(gsub(out_type, "", patch))]
   D[, acatno := as.integer(acatno)]
@@ -34,6 +38,7 @@ extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
   D[, patch := paste("Patch", patch)]
   D$age <- factor(D$age, levels = BLASTtbmod::agz)
   D$hiv <- factor(D$hiv, levels = BLASTtbmod::hivz)
+  D[, varname := gsub("[[:punct:]]+|[[:digit:]]+", "", variable)]
   D[, c("acatno", "hivno") := NULL]
   D
 }
