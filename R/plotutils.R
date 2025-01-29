@@ -13,7 +13,9 @@
 ##' @export
 extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
   rownames(Y) <- BLASTtbmod::get_cols
-  selnmz <- grep(pattern = paste0(out_type, "\\["), rownames(Y), value = TRUE)
+  out_type <- paste0(out_type, "\\[")
+  out_type <- paste0(out_type, collapse = "|") # handling vectors of out_type
+  selnmz <- grep(pattern = out_type, rownames(Y), value = TRUE)
   D <- data.table::as.data.table(Y[row.names(Y) %in% selnmz,
     chain_step_num, ,
     drop = TRUE
@@ -24,7 +26,7 @@ extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
   D[, step := 1:nrow(D)]
   D <- melt(D, id = "step")
   D[, c("patch", "acatno", "hivno") := data.table::tstrsplit(variable, split = ",")]
-  D[, patch := as.integer(gsub(paste0(out_type, "\\["), "", patch))]
+  D[, patch := as.integer(gsub(out_type, "", patch))]
   D[, acatno := as.integer(acatno)]
   D[, hivno := as.integer(gsub("\\]", "", hivno))]
   D[, age := BLASTtbmod::agz[acatno]]
