@@ -603,7 +603,8 @@ Udeaths[, , ] <- Nevents_U[i, j, k] - age_out_U[i, j, k] - HIV_out_U[i, j, k] - 
   U_inmigr[i, j, k]
 
 ## ---------------------- extra calculations associated with infection fluxes
-InfsByPatch[] <- sum(Uinfs[i, , ]) # number of infections in patch i this step
+## number of infections in patch i this step
+InfsByPatch[] <- sum(Uinfs[i, , ]) + sum(LLinfs[i,,]) + sum(Rinfs[i,,])
 InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol))
 update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV

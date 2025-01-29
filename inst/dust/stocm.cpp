@@ -2512,7 +2512,7 @@ public:
       }
     }
     for (int i = 1; i <= shared->dim_InfsByPatch; ++i) {
-      internal.InfsByPatch[i - 1] = odin_sum3<real_type>(internal.Uinfs.data(), i - 1, i, 0, shared->dim_Uinfs_2, 0, shared->dim_Uinfs_3, shared->dim_Uinfs_1, shared->dim_Uinfs_12);
+      internal.InfsByPatch[i - 1] = odin_sum3<real_type>(internal.Uinfs.data(), i - 1, i, 0, shared->dim_Uinfs_2, 0, shared->dim_Uinfs_3, shared->dim_Uinfs_1, shared->dim_Uinfs_12) + odin_sum3<real_type>(internal.LLinfs.data(), i - 1, i, 0, shared->dim_LLinfs_2, 0, shared->dim_LLinfs_3, shared->dim_LLinfs_1, shared->dim_LLinfs_12) + odin_sum3<real_type>(internal.Rinfs.data(), i - 1, i, 0, shared->dim_Rinfs_2, 0, shared->dim_Rinfs_3, shared->dim_Rinfs_1, shared->dim_Rinfs_12);
     }
     for (int i = 1; i <= shared->dim_LRdeaths_1; ++i) {
       for (int j = 1; j <= shared->dim_LRdeaths_2; ++j) {
