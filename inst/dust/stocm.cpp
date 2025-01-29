@@ -763,6 +763,9 @@ public:
     int dim_tbi_Tr;
     int dim_tbi_Tr_1;
     int dim_tbi_Tr_2;
+    int dim_tbi_U;
+    int dim_tbi_U_1;
+    int dim_tbi_U_2;
     int dim_Tijk;
     int dim_Tijk_1;
     int dim_Tijk_12;
@@ -898,6 +901,7 @@ public:
     std::vector<real_type> tbi_R;
     std::vector<real_type> tbi_SC;
     std::vector<real_type> tbi_Tr;
+    std::vector<real_type> tbi_U;
     real_type tfr;
     real_type tol;
     real_type Trsucc_rate;
@@ -1064,52 +1068,39 @@ public:
         internal.popinit_byage[i - 1 + shared->dim_popinit_byage_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, dust::math::floor(shared->popinit[i - 1]), shared->agefracs[j - 1] / (real_type) (odin_sum1<real_type>(shared->agefracs.data(), 0, shared->dim_agefracs) + static_cast<real_type>(1e-10)));
       }
     }
-    for (int i = 1; i <= shared->dim_init_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_U_2; ++j) {
-        internal.init_U[i - 1 + shared->dim_init_U_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], (1 - shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]));
-      }
-    }
-    for (int i = 1; i <= shared->dim_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_U_2; ++j) {
-        int k = 1;
-        internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = internal.init_U[shared->dim_init_U_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_U_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = 0;
-        }
-      }
-    }
     for (int i = 1; i <= shared->dim_init_D_1; ++i) {
       for (int j = 1; j <= shared->dim_init_D_2; ++j) {
-        internal.init_D[i - 1 + shared->dim_init_D_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_D[shared->dim_tbi_D_1 * (j - 1) + i - 1]);
+        internal.init_D[i - 1 + shared->dim_init_D_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_D[shared->dim_tbi_D_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_init_LL_1; ++i) {
       for (int j = 1; j <= shared->dim_init_LL_2; ++j) {
-        internal.init_LL[i - 1 + shared->dim_init_LL_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_LL[shared->dim_tbi_LL_1 * (j - 1) + i - 1]);
+        internal.init_LL[i - 1 + shared->dim_init_LL_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_LL[shared->dim_tbi_LL_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_init_LR_1; ++i) {
       for (int j = 1; j <= shared->dim_init_LR_2; ++j) {
-        internal.init_LR[i - 1 + shared->dim_init_LR_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_LR[shared->dim_tbi_LR_1 * (j - 1) + i - 1]);
+        internal.init_LR[i - 1 + shared->dim_init_LR_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_LR[shared->dim_tbi_LR_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_init_R_1; ++i) {
       for (int j = 1; j <= shared->dim_init_R_2; ++j) {
-        internal.init_R[i - 1 + shared->dim_init_R_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_R[shared->dim_tbi_R_1 * (j - 1) + i - 1]);
+        internal.init_R[i - 1 + shared->dim_init_R_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_R[shared->dim_tbi_R_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_init_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_init_SC_2; ++j) {
-        internal.init_SC[i - 1 + shared->dim_init_SC_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_SC[shared->dim_tbi_SC_1 * (j - 1) + i - 1]);
+        internal.init_SC[i - 1 + shared->dim_init_SC_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_SC[shared->dim_tbi_SC_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_init_Tr_1; ++i) {
       for (int j = 1; j <= shared->dim_init_Tr_2; ++j) {
-        internal.init_Tr[i - 1 + shared->dim_init_Tr_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] * shared->tbi_Tr[shared->dim_tbi_Tr_1 * (j - 1) + i - 1]);
+        internal.init_Tr[i - 1 + shared->dim_init_Tr_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_Tr[shared->dim_tbi_Tr_1 * (j - 1) + i - 1]);
+      }
+    }
+    for (int i = 1; i <= shared->dim_init_U_1; ++i) {
+      for (int j = 1; j <= shared->dim_init_U_2; ++j) {
+        internal.init_U[i - 1 + shared->dim_init_U_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_U[shared->dim_tbi_U_1 * (j - 1) + i - 1]);
       }
     }
     for (int i = 1; i <= shared->dim_D_1; ++i) {
@@ -1200,6 +1191,19 @@ public:
       for (int j = 1; j <= shared->dim_Tr_2; ++j) {
         for (int k = 2; k <= 3; ++k) {
           internal.initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = 0;
+        }
+      }
+    }
+    for (int i = 1; i <= shared->dim_U_1; ++i) {
+      for (int j = 1; j <= shared->dim_U_2; ++j) {
+        int k = 1;
+        internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = internal.init_U[shared->dim_init_U_1 * (j - 1) + i - 1];
+      }
+    }
+    for (int i = 1; i <= shared->dim_U_1; ++i) {
+      for (int j = 1; j <= shared->dim_U_2; ++j) {
+        for (int k = 2; k <= 3; ++k) {
+          internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = 0;
         }
       }
     }
@@ -3462,6 +3466,8 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_tbi_SC_2 = shared->age_dims;
   shared->dim_tbi_Tr_1 = shared->patch_dims;
   shared->dim_tbi_Tr_2 = shared->age_dims;
+  shared->dim_tbi_U_1 = shared->patch_dims;
+  shared->dim_tbi_U_2 = shared->age_dims;
   shared->dim_Tijk_1 = shared->patch_dims;
   shared->dim_Tijk_2 = shared->patch_dims;
   shared->dim_Tijk_3 = 6;
@@ -3781,6 +3787,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_tbi_R = shared->dim_tbi_R_1 * shared->dim_tbi_R_2;
   shared->dim_tbi_SC = shared->dim_tbi_SC_1 * shared->dim_tbi_SC_2;
   shared->dim_tbi_Tr = shared->dim_tbi_Tr_1 * shared->dim_tbi_Tr_2;
+  shared->dim_tbi_U = shared->dim_tbi_U_1 * shared->dim_tbi_U_2;
   shared->dim_Tijk = shared->dim_Tijk_1 * shared->dim_Tijk_2 * shared->dim_Tijk_3;
   shared->dim_Tijk_12 = shared->dim_Tijk_1 * shared->dim_Tijk_2;
   shared->dim_Tr = shared->dim_Tr_1 * shared->dim_Tr_2 * shared->dim_Tr_3;
@@ -3953,6 +3960,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->tbi_R = std::vector<real_type>(shared->dim_tbi_R);
   shared->tbi_SC = std::vector<real_type>(shared->dim_tbi_SC);
   shared->tbi_Tr = std::vector<real_type>(shared->dim_tbi_Tr);
+  shared->tbi_U = std::vector<real_type>(shared->dim_tbi_U);
   internal.Tr_inmigr = std::vector<real_type>(shared->dim_Tr_inmigr);
   internal.Trdeaths = std::vector<real_type>(shared->dim_Trdeaths);
   internal.Trsuccess = std::vector<real_type>(shared->dim_Trsuccess);
@@ -4061,14 +4069,9 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
      int i = 6;
      shared->zk[i - 1] = shared->Ptau + shared->Pmu;
   }
-  for (int i = 1; i <= shared->dim_initLL_1; ++i) {
-    for (int j = 1; j <= shared->dim_initLL_2; ++j) {
-      shared->initLL[i - 1 + shared->dim_initLL_1 * (j - 1)] = 1;
-    }
-  }
   for (int i = 1; i <= shared->dim_initPrev_1; ++i) {
     for (int j = 1; j <= shared->dim_initPrev_2; ++j) {
-      shared->initPrev[i - 1 + shared->dim_initPrev_1 * (j - 1)] = 1 - dust::math::exp(- shared->ari0 * shared->ageMids[j - 1]);
+      shared->initPrev[i - 1 + shared->dim_initPrev_1 * (j - 1)] = dust::math::exp(- shared->ari0 * shared->ageMids[j - 1]) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
     }
   }
   shared->ppF = shared->Pdelta * shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha));
@@ -4077,7 +4080,12 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->A0 = shared->Prho * shared->Ptau * (shared->ppJ / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)));
   for (int i = 1; i <= shared->dim_initF_1; ++i) {
     for (int j = 1; j <= shared->dim_initF_2; ++j) {
-      shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] > shared->tol ? (1 - dust::math::exp(- 2 * shared->ari0)) / (real_type) shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] : 0);
+      shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (1 - shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) * (1 - dust::math::exp(- 2 * shared->ari0)) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
+    }
+  }
+  for (int i = 1; i <= shared->dim_initLL_1; ++i) {
+    for (int j = 1; j <= shared->dim_initLL_2; ++j) {
+      shared->initLL[i - 1 + shared->dim_initLL_1 * (j - 1)] = (1 - shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) * dust::math::exp(- 2 * shared->ari0) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
     }
   }
   shared->ppK = - shared->ppF / (real_type) (shared->Ptau - shared->Psigma - shared->Palpha) - shared->ppG / (real_type) (shared->Ptau - shared->Pepsilon) - shared->ppH / (real_type) (shared->Ptau - shared->Pgamma) - shared->ppJ / (real_type) (shared->Ptau - shared->Pomega - shared->Pdelta);
@@ -4107,12 +4115,12 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   for (int i = 1; i <= shared->dim_initDenom_1; ++i) {
     for (int j = 1; j <= shared->dim_initDenom_2; ++j) {
-      shared->initDenom[i - 1 + shared->dim_initDenom_1 * (j - 1)] = shared->initF[shared->dim_initF_1 * (j - 1) + i - 1] + shared->initLL[shared->dim_initLL_1 * (j - 1) + i - 1] + shared->initD[shared->dim_initD_1 * (j - 1) + i - 1];
+      shared->initDenom[i - 1 + shared->dim_initDenom_1 * (j - 1)] = shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] + shared->initF[shared->dim_initF_1 * (j - 1) + i - 1] + shared->initLL[shared->dim_initLL_1 * (j - 1) + i - 1] + 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2;
     }
   }
   for (int i = 1; i <= shared->dim_tbi_D_1; ++i) {
     for (int j = 1; j <= shared->dim_tbi_D_2; ++j) {
-      shared->tbi_D[i - 1 + shared->dim_tbi_D_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 4) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
+      shared->tbi_D[i - 1 + shared->dim_tbi_D_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
     }
   }
   for (int i = 1; i <= shared->dim_tbi_LL_1; ++i) {
@@ -4127,17 +4135,22 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   for (int i = 1; i <= shared->dim_tbi_R_1; ++i) {
     for (int j = 1; j <= shared->dim_tbi_R_2; ++j) {
-      shared->tbi_R[i - 1 + shared->dim_tbi_R_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 4) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
+      shared->tbi_R[i - 1 + shared->dim_tbi_R_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1]) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
     }
   }
   for (int i = 1; i <= shared->dim_tbi_SC_1; ++i) {
     for (int j = 1; j <= shared->dim_tbi_SC_2; ++j) {
-      shared->tbi_SC[i - 1 + shared->dim_tbi_SC_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 4) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
+      shared->tbi_SC[i - 1 + shared->dim_tbi_SC_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
     }
   }
   for (int i = 1; i <= shared->dim_tbi_Tr_1; ++i) {
     for (int j = 1; j <= shared->dim_tbi_Tr_2; ++j) {
-      shared->tbi_Tr[i - 1 + shared->dim_tbi_Tr_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 4) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
+      shared->tbi_Tr[i - 1 + shared->dim_tbi_Tr_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
+    }
+  }
+  for (int i = 1; i <= shared->dim_tbi_U_1; ++i) {
+    for (int j = 1; j <= shared->dim_tbi_U_2; ++j) {
+      shared->tbi_U[i - 1 + shared->dim_tbi_U_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
     }
   }
   return dust::pars_type<stocm>(shared, internal);

@@ -20,33 +20,34 @@ popinit_byage[,] <- rbinom(floor(popinit[i]),agefracs[j]/(sum(agefracs)+1e-10)) 
 
 
 ## TB initial state
-initPrev[,] <- 1-exp( -ari0*ageMids[j] )             #LTBI
-
-
-## fraction TBI initially R or LR: as ~2 year's of FOI/TBI
-initF[,] <- if(initPrev[i,j]>tol) (1-exp(-2*ari0)) / initPrev[i,j] else 0
-
 ## Initial ratio of TBI to disease states
-initD[,] <- user() #NOTE now taken as input: note mix of D,SC,Tr,R below
+initD[, ] <- user() # NOTE now taken as input: note mix of D,SC,Tr,R below
+initPrev[,] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2)             #non-LTBI=U
+initLL[, ] <- (1.0 - initPrev[i, j]) * exp(-2 * ari0) * (1 - 5 * initD[i, j] / 2)
+initF[, ] <- (1.0 - initPrev[i, j]) * (1.0 - exp(-2 * ari0)) * (1 - 5 * initD[i, j] / 2)
 
-initLL[,] <- 1.0 #basically rest given denom
-initDenom[,] <- initF[i,j] + initLL[i,j] + initD[i,j]
+## ## fraction TBI initially R or LR: as ~2 year's of FOI/TBI
+## initF[,] <- if(initPrev[i,j]>tol) (1-exp(-2*ari0)) / initPrev[i,j] else 0
+
+## safety: should be 1
+initDenom[, ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
+tbi_U[, ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
 tbi_LR[,] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
 tbi_LL[,] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0
-tbi_D[,] <- if(initDenom[i,j] > tol) (initD[i,j]/4)/initDenom[i,j] else 0
-tbi_SC[,] <- if(initDenom[i,j] > tol) (initD[i,j]/4)/initDenom[i,j] else 0
-tbi_Tr[,] <- if(initDenom[i,j] > tol) (initD[i,j]/4)/initDenom[i,j] else 0
-tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j]/4)/initDenom[i,j] else 0
+tbi_D[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+tbi_SC[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+tbi_Tr[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
 
 
 ## NOTE total stochastic even given above
-init_U[,] <- rbinom(popinit_byage[i,j],(1-initPrev[i,j]))
-init_LR[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_LR[i,j])
-init_LL[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_LL[i,j])
-init_D[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_D[i,j])
-init_SC[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_SC[i,j])
-init_Tr[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_Tr[i,j])
-init_R[,] <- rbinom(popinit_byage[i,j],initPrev[i,j]*tbi_R[i,j])
+init_U[, ] <- rbinom(popinit_byage[i, j], tbi_U[i, j])
+init_LR[,] <- rbinom(popinit_byage[i,j],tbi_LR[i,j])
+init_LL[,] <- rbinom(popinit_byage[i,j],tbi_LL[i,j])
+init_D[,] <- rbinom(popinit_byage[i,j],tbi_D[i,j])
+init_SC[,] <- rbinom(popinit_byage[i,j],tbi_SC[i,j])
+init_Tr[,] <- rbinom(popinit_byage[i,j],tbi_Tr[i,j])
+init_R[,] <- rbinom(popinit_byage[i,j],tbi_R[i,j])
 
 ## TODO this will need changing to account for HIV split:
 ## less burnin than plannedw
@@ -404,7 +405,8 @@ dim( ageMids ) <- age_dims
 dim( agefracs ) <- age_dims
 
 
-dim(initDenom) <- c( patch_dims, age_dims )
+dim(initDenom) <- c(patch_dims, age_dims)
+dim(tbi_U) <- c(patch_dims, age_dims)
 dim(tbi_LR) <- c( patch_dims, age_dims )
 dim(tbi_LL) <- c( patch_dims, age_dims )
 dim(tbi_D) <- c( patch_dims, age_dims )
