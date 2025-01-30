@@ -227,6 +227,7 @@ public:
     int dim_births_2;
     int dim_births_3;
     int dim_births_int;
+    int dim_cum_inf_ByPatch;
     int dim_cum_inf_flux;
     int dim_cum_inf_flux_1;
     int dim_cum_inf_flux_2;
@@ -344,6 +345,7 @@ public:
     int dim_incidence_12;
     int dim_incidence_2;
     int dim_incidence_3;
+    int dim_InfPrev;
     int dim_InfsByPatch;
     int dim_InfsByPatchPatch;
     int dim_InfsByPatchPatch_1;
@@ -675,6 +677,7 @@ public:
     int dim_pR_inmigr_12;
     int dim_pR_inmigr_2;
     int dim_pR_inmigr_3;
+    int dim_PrevByPatch;
     int dim_progFast;
     int dim_progFast_1;
     int dim_progFast_12;
@@ -900,20 +903,37 @@ public:
     std::vector<real_type> Hirr;
     int HIV_dims;
     std::vector<real_type> HIV_int;
+    std::vector<real_type> init_D;
+    std::vector<real_type> init_LL;
+    std::vector<real_type> init_LR;
+    std::vector<real_type> init_R;
+    std::vector<real_type> init_SC;
+    std::vector<real_type> init_Tr;
+    std::vector<real_type> init_U;
     std::vector<real_type> initD;
     std::vector<real_type> initDenom;
     std::vector<real_type> initF;
     real_type initial_beta_test;
     std::vector<real_type> initial_bg_deaths;
+    std::vector<real_type> initial_cum_inf_ByPatch;
     std::vector<real_type> initial_cum_inf_flux;
     std::vector<real_type> initial_cum_note_flux;
+    std::vector<real_type> initial_D;
     std::vector<real_type> initial_incidence;
+    std::vector<real_type> initial_LL;
+    std::vector<real_type> initial_LR;
+    std::vector<real_type> initial_N;
     std::vector<real_type> initial_notes;
     std::vector<real_type> initial_notifrate;
+    std::vector<real_type> initial_PrevByPatch;
+    std::vector<real_type> initial_R;
+    std::vector<real_type> initial_SC;
     std::vector<real_type> initial_Sij;
     std::vector<real_type> initial_TB_deaths;
     std::vector<real_type> initial_Tijk;
     real_type initial_tot_incidence;
+    std::vector<real_type> initial_Tr;
+    std::vector<real_type> initial_U;
     std::vector<real_type> initLL;
     std::vector<real_type> initPrev;
     std::vector<real_type> IRR;
@@ -923,6 +943,7 @@ public:
     std::vector<real_type> mu_HIV_int;
     std::vector<real_type> mu_noHIV_int;
     int offset_variable_bg_deaths;
+    int offset_variable_cum_inf_flux;
     int offset_variable_cum_note_flux;
     int offset_variable_D;
     int offset_variable_incidence;
@@ -931,6 +952,7 @@ public:
     int offset_variable_N;
     int offset_variable_notes;
     int offset_variable_notifrate;
+    int offset_variable_PrevByPatch;
     int offset_variable_R;
     int offset_variable_SC;
     int offset_variable_Sij;
@@ -951,6 +973,7 @@ public:
     real_type Pmu;
     real_type Pomega;
     std::vector<real_type> popinit;
+    std::vector<real_type> popinit_byage;
     real_type ppB;
     real_type ppC;
     real_type ppF;
@@ -1024,23 +1047,9 @@ public:
     std::vector<real_type> HIV_out_Tr;
     std::vector<real_type> HIV_out_U;
     std::vector<real_type> HIV_rate_yr;
+    std::vector<real_type> InfPrev;
     std::vector<real_type> InfsByPatch;
     std::vector<real_type> InfsByPatchPatch;
-    std::vector<real_type> init_D;
-    std::vector<real_type> init_LL;
-    std::vector<real_type> init_LR;
-    std::vector<real_type> init_R;
-    std::vector<real_type> init_SC;
-    std::vector<real_type> init_Tr;
-    std::vector<real_type> init_U;
-    std::vector<real_type> initial_D;
-    std::vector<real_type> initial_LL;
-    std::vector<real_type> initial_LR;
-    std::vector<real_type> initial_N;
-    std::vector<real_type> initial_R;
-    std::vector<real_type> initial_SC;
-    std::vector<real_type> initial_Tr;
-    std::vector<real_type> initial_U;
     std::vector<real_type> LL_inmigr;
     std::vector<real_type> LLdeaths;
     std::vector<real_type> LLinfs;
@@ -1094,7 +1103,6 @@ public:
     std::vector<real_type> Pellij;
     std::vector<real_type> pLL_inmigr;
     std::vector<real_type> pLR_inmigr;
-    std::vector<real_type> popinit_byage;
     std::vector<real_type> pR_inmigr;
     std::vector<real_type> progFast;
     std::vector<real_type> progress;
@@ -1133,167 +1141,25 @@ public:
     shared(pars.shared), internal(pars.internal) {
   }
   size_t size() const {
-    return shared->dim_bg_deaths + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tijk + shared->dim_Tr + shared->dim_U + 2;
+    return shared->dim_bg_deaths + shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tijk + shared->dim_Tr + shared->dim_U + 2;
   }
   std::vector<real_type> initial(size_t step, rng_state_type& rng_state) {
-    std::vector<real_type> state(shared->dim_bg_deaths + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tijk + shared->dim_Tr + shared->dim_U + 2);
-    for (int i = 1; i <= shared->dim_popinit_byage_1; ++i) {
-      for (int j = 1; j <= shared->dim_popinit_byage_2; ++j) {
-        internal.popinit_byage[i - 1 + shared->dim_popinit_byage_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, dust::math::floor(shared->popinit[i - 1]), shared->agefracs[j - 1] / (real_type) (odin_sum1<real_type>(shared->agefracs.data(), 0, shared->dim_agefracs) + static_cast<real_type>(1e-10)));
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_D_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_D_2; ++j) {
-        internal.init_D[i - 1 + shared->dim_init_D_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_D[shared->dim_tbi_D_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_LL_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_LL_2; ++j) {
-        internal.init_LL[i - 1 + shared->dim_init_LL_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_LL[shared->dim_tbi_LL_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_LR_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_LR_2; ++j) {
-        internal.init_LR[i - 1 + shared->dim_init_LR_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_LR[shared->dim_tbi_LR_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_R_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_R_2; ++j) {
-        internal.init_R[i - 1 + shared->dim_init_R_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_R[shared->dim_tbi_R_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_SC_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_SC_2; ++j) {
-        internal.init_SC[i - 1 + shared->dim_init_SC_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_SC[shared->dim_tbi_SC_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_Tr_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_Tr_2; ++j) {
-        internal.init_Tr[i - 1 + shared->dim_init_Tr_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_Tr[shared->dim_tbi_Tr_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_init_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_init_U_2; ++j) {
-        internal.init_U[i - 1 + shared->dim_init_U_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1], shared->tbi_U[shared->dim_tbi_U_1 * (j - 1) + i - 1]);
-      }
-    }
-    for (int i = 1; i <= shared->dim_D_1; ++i) {
-      for (int j = 1; j <= shared->dim_D_2; ++j) {
-        int k = 1;
-        internal.initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = internal.init_D[shared->dim_init_D_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_D_1; ++i) {
-      for (int j = 1; j <= shared->dim_D_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_LL_1; ++i) {
-      for (int j = 1; j <= shared->dim_LL_2; ++j) {
-        int k = 1;
-        internal.initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = internal.init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_LL_1; ++i) {
-      for (int j = 1; j <= shared->dim_LL_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_LR_1; ++i) {
-      for (int j = 1; j <= shared->dim_LR_2; ++j) {
-        int k = 1;
-        internal.initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = internal.init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_LR_1; ++i) {
-      for (int j = 1; j <= shared->dim_LR_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_N_1; ++i) {
-      for (int j = 1; j <= shared->dim_N_2; ++j) {
-        int k = 1;
-        internal.initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = internal.init_U[shared->dim_init_U_1 * (j - 1) + i - 1] + internal.init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1] + internal.init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1] + internal.init_D[shared->dim_init_D_1 * (j - 1) + i - 1] + internal.init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] + internal.init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1] + internal.init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_N_1; ++i) {
-      for (int j = 1; j <= shared->dim_N_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_R_1; ++i) {
-      for (int j = 1; j <= shared->dim_R_2; ++j) {
-        int k = 1;
-        internal.initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = internal.init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_R_1; ++i) {
-      for (int j = 1; j <= shared->dim_R_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_SC_1; ++i) {
-      for (int j = 1; j <= shared->dim_SC_2; ++j) {
-        int k = 1;
-        internal.initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = internal.init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_SC_1; ++i) {
-      for (int j = 1; j <= shared->dim_SC_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_Tr_1; ++i) {
-      for (int j = 1; j <= shared->dim_Tr_2; ++j) {
-        int k = 1;
-        internal.initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = internal.init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_Tr_1; ++i) {
-      for (int j = 1; j <= shared->dim_Tr_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = 0;
-        }
-      }
-    }
-    for (int i = 1; i <= shared->dim_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_U_2; ++j) {
-        int k = 1;
-        internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = internal.init_U[shared->dim_init_U_1 * (j - 1) + i - 1];
-      }
-    }
-    for (int i = 1; i <= shared->dim_U_1; ++i) {
-      for (int j = 1; j <= shared->dim_U_2; ++j) {
-        for (int k = 2; k <= 3; ++k) {
-          internal.initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = 0;
-        }
-      }
-    }
+    std::vector<real_type> state(shared->dim_bg_deaths + shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tijk + shared->dim_Tr + shared->dim_U + 2);
     state[0] = shared->initial_tot_incidence;
     state[1] = shared->initial_beta_test;
-    std::copy(shared->initial_cum_inf_flux.begin(), shared->initial_cum_inf_flux.end(), state.begin() + 2);
+    std::copy(shared->initial_cum_inf_ByPatch.begin(), shared->initial_cum_inf_ByPatch.end(), state.begin() + 2);
+    std::copy(shared->initial_PrevByPatch.begin(), shared->initial_PrevByPatch.end(), state.begin() + shared->offset_variable_PrevByPatch);
+    std::copy(shared->initial_cum_inf_flux.begin(), shared->initial_cum_inf_flux.end(), state.begin() + shared->offset_variable_cum_inf_flux);
     std::copy(shared->initial_cum_note_flux.begin(), shared->initial_cum_note_flux.end(), state.begin() + shared->offset_variable_cum_note_flux);
     std::copy(shared->initial_Sij.begin(), shared->initial_Sij.end(), state.begin() + shared->offset_variable_Sij);
-    std::copy(internal.initial_U.begin(), internal.initial_U.end(), state.begin() + shared->offset_variable_U);
-    std::copy(internal.initial_LR.begin(), internal.initial_LR.end(), state.begin() + shared->offset_variable_LR);
-    std::copy(internal.initial_LL.begin(), internal.initial_LL.end(), state.begin() + shared->offset_variable_LL);
-    std::copy(internal.initial_D.begin(), internal.initial_D.end(), state.begin() + shared->offset_variable_D);
-    std::copy(internal.initial_SC.begin(), internal.initial_SC.end(), state.begin() + shared->offset_variable_SC);
-    std::copy(internal.initial_Tr.begin(), internal.initial_Tr.end(), state.begin() + shared->offset_variable_Tr);
-    std::copy(internal.initial_R.begin(), internal.initial_R.end(), state.begin() + shared->offset_variable_R);
-    std::copy(internal.initial_N.begin(), internal.initial_N.end(), state.begin() + shared->offset_variable_N);
+    std::copy(shared->initial_U.begin(), shared->initial_U.end(), state.begin() + shared->offset_variable_U);
+    std::copy(shared->initial_LR.begin(), shared->initial_LR.end(), state.begin() + shared->offset_variable_LR);
+    std::copy(shared->initial_LL.begin(), shared->initial_LL.end(), state.begin() + shared->offset_variable_LL);
+    std::copy(shared->initial_D.begin(), shared->initial_D.end(), state.begin() + shared->offset_variable_D);
+    std::copy(shared->initial_SC.begin(), shared->initial_SC.end(), state.begin() + shared->offset_variable_SC);
+    std::copy(shared->initial_Tr.begin(), shared->initial_Tr.end(), state.begin() + shared->offset_variable_Tr);
+    std::copy(shared->initial_R.begin(), shared->initial_R.end(), state.begin() + shared->offset_variable_R);
+    std::copy(shared->initial_N.begin(), shared->initial_N.end(), state.begin() + shared->offset_variable_N);
     std::copy(shared->initial_TB_deaths.begin(), shared->initial_TB_deaths.end(), state.begin() + shared->offset_variable_TB_deaths);
     std::copy(shared->initial_notifrate.begin(), shared->initial_notifrate.end(), state.begin() + shared->offset_variable_notifrate);
     std::copy(shared->initial_notes.begin(), shared->initial_notes.end(), state.begin() + shared->offset_variable_notes);
@@ -1304,7 +1170,8 @@ public:
   }
   void update(size_t step, const real_type * state, rng_state_type& rng_state, real_type * state_next) {
     const real_type * U = state + shared->offset_variable_U;
-    const real_type * cum_inf_flux = state + 2;
+    const real_type * cum_inf_ByPatch = state + 2;
+    const real_type * cum_inf_flux = state + shared->offset_variable_cum_inf_flux;
     const real_type * cum_note_flux = state + shared->offset_variable_cum_note_flux;
     const real_type * LR = state + shared->offset_variable_LR;
     const real_type * LL = state + shared->offset_variable_LL;
@@ -1312,7 +1179,6 @@ public:
     const real_type * D = state + shared->offset_variable_D;
     const real_type * Tr = state + shared->offset_variable_Tr;
     const real_type * R = state + shared->offset_variable_R;
-    const real_type * notes = state + shared->offset_variable_notes;
     const real_type * N = state + shared->offset_variable_N;
     const real_type beta_test = state[1];
     const real_type * Tijk = state + shared->offset_variable_Tijk;
@@ -1342,6 +1208,9 @@ public:
        int i = 3;
        internal.HIV_rate_yr[i - 1] = 0;
     }
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      internal.InfPrev[i - 1] = (odin_sum3<real_type>(D, i - 1, i, 0, shared->dim_D_2, 0, shared->dim_D_3, shared->dim_D_1, shared->dim_D_12) + shared->relinf * odin_sum3<real_type>(SC, i - 1, i, 0, shared->dim_SC_2, 0, shared->dim_SC_3, shared->dim_SC_1, shared->dim_SC_12)) / (real_type) (odin_sum3<real_type>(N, i - 1, i, 0, shared->dim_N_2, 0, shared->dim_N_3, shared->dim_N_1, shared->dim_N_12) + static_cast<real_type>(1.0000000000000001e-15));
+    }
     for (int i = 1; i <= shared->dim_m_in_t; ++i) {
       internal.m_in_t[i - 1] = (static_cast<int>(step) < shared->sim_length ? shared->m_in_int[shared->dim_m_in_int_1 * (step + 1 - 1) + i - 1] : shared->m_in_int[shared->dim_m_in_int_1 * (shared->sim_length - 1) + i - 1]);
     }
@@ -1353,9 +1222,6 @@ public:
     }
     for (int i = 1; i <= shared->dim_mu_noHIV_t; ++i) {
       internal.mu_noHIV_t[i - 1] = (static_cast<int>(step) < shared->sim_length ? shared->mu_noHIV_int[shared->dim_mu_noHIV_int_1 * (step + 1 - 1) + i - 1] : shared->mu_noHIV_int[shared->dim_mu_noHIV_int_1 * (shared->sim_length - 1) + i - 1]);
-    }
-    for (int i = 1; i <= shared->dim_NotesByPatch; ++i) {
-      internal.NotesByPatch[i - 1] = odin_sum3<real_type>(notes, i - 1, i, 0, shared->dim_notes_2, 0, shared->dim_notes_3, shared->dim_notes_1, shared->dim_notes_12);
     }
     for (int i = 1; i <= shared->dim_N_1; ++i) {
       for (int j = 1; j <= shared->dim_N_2; ++j) {
@@ -1376,8 +1242,8 @@ public:
         }
       }
     }
-    for (int i = 1; i <= shared->dim_foitemp_1; ++i) {
-      for (int j = 1; j <= shared->dim_foitemp_2; ++j) {
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      for (int j = 1; j <= shared->patch_dims; ++j) {
         internal.foitemp[i - 1 + shared->dim_foitemp_1 * (j - 1)] = beta_seas * shared->MM[shared->dim_MM_1 * (j - 1) + i - 1] * (odin_sum3<real_type>(D, j - 1, j, 0, shared->dim_D_2, 0, shared->dim_D_3, shared->dim_D_1, shared->dim_D_12) + shared->relinf * odin_sum3<real_type>(SC, j - 1, j, 0, shared->dim_SC_2, 0, shared->dim_SC_3, shared->dim_SC_1, shared->dim_SC_12)) / (real_type) (odin_sum3<real_type>(N, j - 1, j, 0, shared->dim_N_2, 0, shared->dim_N_3, shared->dim_N_1, shared->dim_N_12) + static_cast<real_type>(1.0000000000000001e-15));
       }
     }
@@ -1885,12 +1751,15 @@ public:
         internal.rate_Tr[i - 1 + shared->dim_rate_Tr_1 * (j - 1) + shared->dim_rate_Tr_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->Trsucc_rate + shared->Trxd_rate + shared->age_rate[j - 1];
       }
     }
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      state_next[shared->offset_variable_PrevByPatch + i - 1] = internal.InfPrev[i - 1];
+    }
     for (int i = 1; i <= shared->dim_Sij_1; ++i) {
       for (int j = 1; j <= shared->dim_Sij_2; ++j) {
         state_next[shared->offset_variable_Sij + i - 1 + shared->dim_Sij_1 * (j - 1)] = dust::math::exp(- shared->zk[0]) * (Tijk[shared->dim_Tijk_12 * 0 + shared->dim_Tijk_1 * (j - 1) + i - 1] + Sij[shared->dim_Sij_1 * (j - 1) + i - 1]);
       }
     }
-    for (int i = 1; i <= shared->dim_foi; ++i) {
+    for (int i = 1; i <= shared->patch_dims; ++i) {
       internal.foi[i - 1] = odin_sum2<real_type>(internal.foitemp.data(), i - 1, i, 0, shared->dim_foitemp_2, shared->dim_foitemp_1);
     }
     for (int i = 1; i <= shared->dim_Nevents_D_1; ++i) {
@@ -1947,6 +1816,11 @@ public:
         for (int k = 1; k <= shared->dim_p_Trage_3; ++k) {
           internal.p_Trage[i - 1 + shared->dim_p_Trage_1 * (j - 1) + shared->dim_p_Trage_12 * (k - 1)] = (internal.rate_Tr[shared->dim_rate_Tr_12 * (k - 1) + shared->dim_rate_Tr_1 * (j - 1) + i - 1] > shared->tol ? shared->age_rate[j - 1] / (real_type) internal.rate_Tr[shared->dim_rate_Tr_12 * (k - 1) + shared->dim_rate_Tr_1 * (j - 1) + i - 1] : 0);
         }
+      }
+    }
+    for (int i = 1; i <= shared->dim_cum_note_flux_1; ++i) {
+      for (int j = 1; j <= shared->dim_cum_note_flux_2; ++j) {
+        state_next[shared->offset_variable_cum_note_flux + i - 1 + shared->dim_cum_note_flux_1 * (j - 1)] = cum_note_flux[shared->dim_cum_note_flux_1 * (j - 1) + i - 1] + internal.foitemp[shared->dim_foitemp_1 * (j - 1) + i - 1];
       }
     }
     for (int i = 1; i <= shared->dim_age_out_D_1; ++i) {
@@ -2101,11 +1975,6 @@ public:
       for (int j = 1; j <= shared->dim_p_Uinf_2; ++j) {
         int k = 3;
         internal.p_Uinf[i - 1 + shared->dim_p_Uinf_1 * (j - 1) + shared->dim_p_Uinf_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + internal.foi[i - 1] * shared->TB_HIV_mod[2] > shared->tol ? internal.foi[i - 1] * shared->TB_HIV_mod[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + internal.foi[i - 1] * shared->TB_HIV_mod[2]) : 0);
-      }
-    }
-    for (int i = 1; i <= shared->dim_Pellij_1; ++i) {
-      for (int j = 1; j <= shared->dim_Pellij_2; ++j) {
-        internal.Pellij[i - 1 + shared->dim_Pellij_1 * (j - 1)] = internal.foitemp[shared->dim_foitemp_1 * (j - 1) + i - 1] / (real_type) (internal.foi[i - 1] + shared->tol);
       }
     }
     for (int i = 1; i <= shared->dim_rate_LL_1; ++i) {
@@ -2263,11 +2132,6 @@ public:
         }
       }
     }
-    for (int i = 1; i <= shared->dim_NotesByPatchPatch_1; ++i) {
-      for (int j = 1; j <= shared->dim_NotesByPatchPatch_2; ++j) {
-        internal.NotesByPatchPatch[i - 1 + shared->dim_NotesByPatchPatch_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.NotesByPatch[i - 1], internal.Pellij[shared->dim_Pellij_1 * (j - 1) + i - 1]);
-      }
-    }
     for (int i = 1; i <= shared->dim_p_LLage_1; ++i) {
       for (int j = 1; j <= shared->dim_p_LLage_2; ++j) {
         for (int k = 1; k <= shared->dim_p_LLage_3; ++k) {
@@ -2388,11 +2252,6 @@ public:
         for (int k = 1; k <= shared->dim_Trsuccess_3; ++k) {
           internal.Trsuccess[i - 1 + shared->dim_Trsuccess_1 * (j - 1) + shared->dim_Trsuccess_12 * (k - 1)] = dust::random::binomial<real_type>(rng_state, internal.Nevents_Tr[shared->dim_Nevents_Tr_12 * (k - 1) + shared->dim_Nevents_Tr_1 * (j - 1) + i - 1] - internal.age_out_Tr[shared->dim_age_out_Tr_12 * (k - 1) + shared->dim_age_out_Tr_1 * (j - 1) + i - 1] - internal.HIV_out_Tr[shared->dim_HIV_out_Tr_12 * (k - 1) + shared->dim_HIV_out_Tr_1 * (j - 1) + i - 1], internal.p_Trsuccess[shared->dim_p_Trsuccess_12 * (k - 1) + shared->dim_p_Trsuccess_1 * (j - 1) + i - 1]);
         }
-      }
-    }
-    for (int i = 1; i <= shared->dim_cum_note_flux_1; ++i) {
-      for (int j = 1; j <= shared->dim_cum_note_flux_2; ++j) {
-        state_next[shared->offset_variable_cum_note_flux + i - 1 + shared->dim_cum_note_flux_1 * (j - 1)] = cum_note_flux[shared->dim_cum_note_flux_1 * (j - 1) + i - 1] + internal.NotesByPatchPatch[shared->dim_NotesByPatchPatch_1 * (j - 1) + i - 1];
       }
     }
     for (int i = 1; i <= shared->dim_age_in_LL_1; ++i) {
@@ -2585,7 +2444,7 @@ public:
         }
       }
     }
-    for (int i = 1; i <= shared->dim_InfsByPatch; ++i) {
+    for (int i = 1; i <= shared->patch_dims; ++i) {
       internal.InfsByPatch[i - 1] = odin_sum3<real_type>(internal.Uinfs.data(), i - 1, i, 0, shared->dim_Uinfs_2, 0, shared->dim_Uinfs_3, shared->dim_Uinfs_1, shared->dim_Uinfs_12) + odin_sum3<real_type>(internal.LLinfs.data(), i - 1, i, 0, shared->dim_LLinfs_2, 0, shared->dim_LLinfs_3, shared->dim_LLinfs_1, shared->dim_LLinfs_12) + odin_sum3<real_type>(internal.Rinfs.data(), i - 1, i, 0, shared->dim_Rinfs_2, 0, shared->dim_Rinfs_3, shared->dim_Rinfs_1, shared->dim_Rinfs_12);
     }
     for (int i = 1; i <= shared->dim_LRdeaths_1; ++i) {
@@ -2644,9 +2503,13 @@ public:
         }
       }
     }
-    for (int i = 1; i <= shared->dim_InfsByPatchPatch_1; ++i) {
-      for (int j = 1; j <= shared->dim_InfsByPatchPatch_2; ++j) {
-        internal.InfsByPatchPatch[i - 1 + shared->dim_InfsByPatchPatch_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.InfsByPatch[i - 1], internal.foitemp[shared->dim_foitemp_1 * (j - 1) + i - 1] / (real_type) (internal.foi[i - 1] + shared->tol));
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      int j = 1;
+      internal.InfsByPatchPatch[i - 1 + shared->dim_InfsByPatchPatch_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.InfsByPatch[i - 1], internal.foitemp[shared->dim_foitemp_1 * 0 + i - 1] / (real_type) (internal.foi[i - 1] + shared->tol));
+    }
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      for (int j = 2; j <= shared->patch_dims; ++j) {
+        internal.InfsByPatchPatch[i - 1 + shared->dim_InfsByPatchPatch_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.InfsByPatch[i - 1] - odin_sum2<real_type>(internal.InfsByPatchPatch.data(), i - 1, i, 0, j - 1, shared->dim_InfsByPatchPatch_1), internal.foitemp[shared->dim_foitemp_1 * (j - 1) + i - 1] / (real_type) (odin_sum2<real_type>(internal.foitemp.data(), i - 1, i, j - 1, shared->patch_dims, shared->dim_foitemp_1) + shared->tol));
       }
     }
     for (int i = 1; i <= shared->dim_LL_inmigr_1; ++i) {
@@ -2676,6 +2539,9 @@ public:
           internal.Udeaths[i - 1 + shared->dim_Udeaths_1 * (j - 1) + shared->dim_Udeaths_12 * (k - 1)] = internal.Nevents_U[shared->dim_Nevents_U_12 * (k - 1) + shared->dim_Nevents_U_1 * (j - 1) + i - 1] - internal.age_out_U[shared->dim_age_out_U_12 * (k - 1) + shared->dim_age_out_U_1 * (j - 1) + i - 1] - internal.HIV_out_U[shared->dim_HIV_out_U_12 * (k - 1) + shared->dim_HIV_out_U_1 * (j - 1) + i - 1] - internal.Uinfs[shared->dim_Uinfs_12 * (k - 1) + shared->dim_Uinfs_1 * (j - 1) + i - 1] - internal.U_inmigr[shared->dim_U_inmigr_12 * (k - 1) + shared->dim_U_inmigr_1 * (j - 1) + i - 1];
         }
       }
+    }
+    for (int i = 1; i <= shared->dim_cum_inf_ByPatch; ++i) {
+      state_next[2 + i - 1] = cum_inf_ByPatch[i - 1] + internal.InfsByPatch[i - 1];
     }
     for (int i = 1; i <= shared->dim_incidence_1; ++i) {
       for (int j = 1; j <= shared->dim_incidence_2; ++j) {
@@ -2736,7 +2602,7 @@ public:
     }
     for (int i = 1; i <= shared->dim_cum_inf_flux_1; ++i) {
       for (int j = 1; j <= shared->dim_cum_inf_flux_2; ++j) {
-        state_next[2 + i - 1 + shared->dim_cum_inf_flux_1 * (j - 1)] = cum_inf_flux[shared->dim_cum_inf_flux_1 * (j - 1) + i - 1] + internal.InfsByPatchPatch[shared->dim_InfsByPatchPatch_1 * (j - 1) + i - 1];
+        state_next[shared->offset_variable_cum_inf_flux + i - 1 + shared->dim_cum_inf_flux_1 * (j - 1)] = cum_inf_flux[shared->dim_cum_inf_flux_1 * (j - 1) + i - 1] + internal.InfsByPatchPatch[shared->dim_InfsByPatchPatch_1 * (j - 1) + i - 1];
       }
     }
     for (int i = 1; i <= shared->dim_Tijk_1; ++i) {
@@ -3171,6 +3037,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_births_1 = shared->patch_dims;
   shared->dim_births_2 = shared->age_dims;
   shared->dim_births_3 = shared->HIV_dims;
+  shared->dim_cum_inf_ByPatch = shared->patch_dims;
   shared->dim_cum_inf_flux_1 = shared->patch_dims;
   shared->dim_cum_inf_flux_2 = shared->patch_dims;
   shared->dim_cum_note_flux_1 = shared->patch_dims;
@@ -3243,6 +3110,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_incidence_1 = shared->patch_dims;
   shared->dim_incidence_2 = shared->age_dims;
   shared->dim_incidence_3 = shared->HIV_dims;
+  shared->dim_InfPrev = shared->patch_dims;
   shared->dim_InfsByPatch = shared->patch_dims;
   shared->dim_InfsByPatchPatch_1 = shared->patch_dims;
   shared->dim_InfsByPatchPatch_2 = shared->patch_dims;
@@ -3441,6 +3309,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_pR_inmigr_1 = shared->patch_dims;
   shared->dim_pR_inmigr_2 = shared->age_dims;
   shared->dim_pR_inmigr_3 = shared->HIV_dims;
+  shared->dim_PrevByPatch = shared->patch_dims;
   shared->dim_progFast_1 = shared->patch_dims;
   shared->dim_progFast_2 = shared->age_dims;
   shared->dim_progFast_3 = shared->HIV_dims;
@@ -3595,7 +3464,10 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.elli = std::vector<real_type>(shared->dim_elli);
   internal.foi = std::vector<real_type>(shared->dim_foi);
   internal.HIV_rate_yr = std::vector<real_type>(shared->dim_HIV_rate_yr);
+  internal.InfPrev = std::vector<real_type>(shared->dim_InfPrev);
   internal.InfsByPatch = std::vector<real_type>(shared->dim_InfsByPatch);
+  shared->initial_cum_inf_ByPatch = std::vector<real_type>(shared->dim_cum_inf_ByPatch);
+  shared->initial_PrevByPatch = std::vector<real_type>(shared->dim_PrevByPatch);
   internal.m_in_t = std::vector<real_type>(shared->dim_m_in_t);
   internal.mu_ART_t = std::vector<real_type>(shared->dim_mu_ART_t);
   internal.mu_HIV_t = std::vector<real_type>(shared->dim_mu_HIV_t);
@@ -3883,7 +3755,15 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_Uinfs = shared->dim_Uinfs_1 * shared->dim_Uinfs_2 * shared->dim_Uinfs_3;
   shared->dim_Uinfs_12 = shared->dim_Uinfs_1 * shared->dim_Uinfs_2;
   shared->Hirr = user_get_array_fixed<real_type, 1>(user, "Hirr", shared->Hirr, {shared->dim_Hirr}, NA_REAL, NA_REAL);
+  for (int i = 1; i <= shared->dim_cum_inf_ByPatch; ++i) {
+    shared->initial_cum_inf_ByPatch[i - 1] = 0;
+  }
+  for (int i = 1; i <= shared->dim_PrevByPatch; ++i) {
+    shared->initial_PrevByPatch[i - 1] = 0;
+  }
   shared->IRR = user_get_array_fixed<real_type, 1>(user, "IRR", shared->IRR, {shared->dim_IRR}, NA_REAL, NA_REAL);
+  shared->offset_variable_cum_inf_flux = shared->dim_cum_inf_ByPatch + shared->dim_PrevByPatch + 2;
+  shared->offset_variable_PrevByPatch = shared->dim_cum_inf_ByPatch + 2;
   shared->Pdelta = shared->dtct_rate;
   shared->popinit = user_get_array_fixed<real_type, 1>(user, "popinit", shared->popinit, {shared->dim_popinit}, NA_REAL, NA_REAL);
   shared->ppB = shared->Pepsilon * shared->Psigma / (real_type) (shared->Pepsilon - shared->Psigma - shared->Palpha);
@@ -3925,32 +3805,32 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.HIV_out_Tr = std::vector<real_type>(shared->dim_HIV_out_Tr);
   internal.HIV_out_U = std::vector<real_type>(shared->dim_HIV_out_U);
   internal.InfsByPatchPatch = std::vector<real_type>(shared->dim_InfsByPatchPatch);
-  internal.init_D = std::vector<real_type>(shared->dim_init_D);
-  internal.init_LL = std::vector<real_type>(shared->dim_init_LL);
-  internal.init_LR = std::vector<real_type>(shared->dim_init_LR);
-  internal.init_R = std::vector<real_type>(shared->dim_init_R);
-  internal.init_SC = std::vector<real_type>(shared->dim_init_SC);
-  internal.init_Tr = std::vector<real_type>(shared->dim_init_Tr);
-  internal.init_U = std::vector<real_type>(shared->dim_init_U);
+  shared->init_D = std::vector<real_type>(shared->dim_init_D);
+  shared->init_LL = std::vector<real_type>(shared->dim_init_LL);
+  shared->init_LR = std::vector<real_type>(shared->dim_init_LR);
+  shared->init_R = std::vector<real_type>(shared->dim_init_R);
+  shared->init_SC = std::vector<real_type>(shared->dim_init_SC);
+  shared->init_Tr = std::vector<real_type>(shared->dim_init_Tr);
+  shared->init_U = std::vector<real_type>(shared->dim_init_U);
   shared->initDenom = std::vector<real_type>(shared->dim_initDenom);
   shared->initF = std::vector<real_type>(shared->dim_initF);
   shared->initial_bg_deaths = std::vector<real_type>(shared->dim_bg_deaths);
   shared->initial_cum_inf_flux = std::vector<real_type>(shared->dim_cum_inf_flux);
   shared->initial_cum_note_flux = std::vector<real_type>(shared->dim_cum_note_flux);
-  internal.initial_D = std::vector<real_type>(shared->dim_D);
+  shared->initial_D = std::vector<real_type>(shared->dim_D);
   shared->initial_incidence = std::vector<real_type>(shared->dim_incidence);
-  internal.initial_LL = std::vector<real_type>(shared->dim_LL);
-  internal.initial_LR = std::vector<real_type>(shared->dim_LR);
-  internal.initial_N = std::vector<real_type>(shared->dim_N);
+  shared->initial_LL = std::vector<real_type>(shared->dim_LL);
+  shared->initial_LR = std::vector<real_type>(shared->dim_LR);
+  shared->initial_N = std::vector<real_type>(shared->dim_N);
   shared->initial_notes = std::vector<real_type>(shared->dim_notes);
   shared->initial_notifrate = std::vector<real_type>(shared->dim_notifrate);
-  internal.initial_R = std::vector<real_type>(shared->dim_R);
-  internal.initial_SC = std::vector<real_type>(shared->dim_SC);
+  shared->initial_R = std::vector<real_type>(shared->dim_R);
+  shared->initial_SC = std::vector<real_type>(shared->dim_SC);
   shared->initial_Sij = std::vector<real_type>(shared->dim_Sij);
   shared->initial_TB_deaths = std::vector<real_type>(shared->dim_TB_deaths);
   shared->initial_Tijk = std::vector<real_type>(shared->dim_Tijk);
-  internal.initial_Tr = std::vector<real_type>(shared->dim_Tr);
-  internal.initial_U = std::vector<real_type>(shared->dim_U);
+  shared->initial_Tr = std::vector<real_type>(shared->dim_Tr);
+  shared->initial_U = std::vector<real_type>(shared->dim_U);
   shared->initLL = std::vector<real_type>(shared->dim_initLL);
   shared->initPrev = std::vector<real_type>(shared->dim_initPrev);
   internal.LL_inmigr = std::vector<real_type>(shared->dim_LL_inmigr);
@@ -4001,7 +3881,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.Pellij = std::vector<real_type>(shared->dim_Pellij);
   internal.pLL_inmigr = std::vector<real_type>(shared->dim_pLL_inmigr);
   internal.pLR_inmigr = std::vector<real_type>(shared->dim_pLR_inmigr);
-  internal.popinit_byage = std::vector<real_type>(shared->dim_popinit_byage);
+  shared->popinit_byage = std::vector<real_type>(shared->dim_popinit_byage);
   internal.pR_inmigr = std::vector<real_type>(shared->dim_pR_inmigr);
   internal.progFast = std::vector<real_type>(shared->dim_progFast);
   internal.progress = std::vector<real_type>(shared->dim_progress);
@@ -4101,22 +3981,22 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
     }
   }
   shared->MM = user_get_array_fixed<real_type, 2>(user, "MM", shared->MM, {shared->dim_MM_1, shared->dim_MM_2}, NA_REAL, NA_REAL);
-  shared->offset_variable_bg_deaths = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_cum_note_flux = shared->dim_cum_inf_flux + 2;
-  shared->offset_variable_D = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_LL + shared->dim_LR + shared->dim_Sij + shared->dim_U + 2;
-  shared->offset_variable_incidence = shared->dim_bg_deaths + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_LL = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_LR + shared->dim_Sij + shared->dim_U + 2;
-  shared->offset_variable_LR = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_Sij + shared->dim_U + 2;
-  shared->offset_variable_N = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_notes = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_notifrate = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_R = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_SC = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_Sij + shared->dim_U + 2;
-  shared->offset_variable_Sij = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + 2;
-  shared->offset_variable_TB_deaths = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_Tijk = shared->dim_bg_deaths + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
-  shared->offset_variable_Tr = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_SC + shared->dim_Sij + shared->dim_U + 2;
-  shared->offset_variable_U = shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_Sij + 2;
+  shared->offset_variable_bg_deaths = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_cum_note_flux = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_PrevByPatch + 2;
+  shared->offset_variable_D = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_LL + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_Sij + shared->dim_U + 2;
+  shared->offset_variable_incidence = shared->dim_bg_deaths + shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_LL = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_Sij + shared->dim_U + 2;
+  shared->offset_variable_LR = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_PrevByPatch + shared->dim_Sij + shared->dim_U + 2;
+  shared->offset_variable_N = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_notes = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_notifrate = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_R = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_SC = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_Sij + shared->dim_U + 2;
+  shared->offset_variable_Sij = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_PrevByPatch + 2;
+  shared->offset_variable_TB_deaths = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_Tijk = shared->dim_bg_deaths + shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_incidence + shared->dim_LL + shared->dim_LR + shared->dim_N + shared->dim_notes + shared->dim_notifrate + shared->dim_PrevByPatch + shared->dim_R + shared->dim_SC + shared->dim_Sij + shared->dim_TB_deaths + shared->dim_Tr + shared->dim_U + 2;
+  shared->offset_variable_Tr = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_D + shared->dim_LL + shared->dim_LR + shared->dim_PrevByPatch + shared->dim_SC + shared->dim_Sij + shared->dim_U + 2;
+  shared->offset_variable_U = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_PrevByPatch + shared->dim_Sij + 2;
   shared->ppC = shared->ppB + shared->Palpha;
   shared->ppG = - shared->Pdelta * shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon));
   {
@@ -4146,6 +4026,11 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   for (int i = 1; i <= shared->dim_initPrev_1; ++i) {
     for (int j = 1; j <= shared->dim_initPrev_2; ++j) {
       shared->initPrev[i - 1 + shared->dim_initPrev_1 * (j - 1)] = dust::math::exp(- shared->ari0 * shared->ageMids[j - 1]) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
+    }
+  }
+  for (int i = 1; i <= shared->dim_popinit_byage_1; ++i) {
+    for (int j = 1; j <= shared->dim_popinit_byage_2; ++j) {
+      shared->popinit_byage[i - 1 + shared->dim_popinit_byage_1 * (j - 1)] = dust::math::floor(shared->popinit[i - 1] * shared->agefracs[j - 1] / (real_type) (odin_sum1<real_type>(shared->agefracs.data(), 0, shared->dim_agefracs) + static_cast<real_type>(1e-10)));
     }
   }
   shared->ppF = shared->Pdelta * shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha));
@@ -4227,53 +4112,196 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
       shared->tbi_U[i - 1 + shared->dim_tbi_U_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
     }
   }
+  for (int i = 1; i <= shared->dim_init_D_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_D_2; ++j) {
+      shared->init_D[i - 1 + shared->dim_init_D_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_D[shared->dim_tbi_D_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_LL_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_LL_2; ++j) {
+      shared->init_LL[i - 1 + shared->dim_init_LL_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_LL[shared->dim_tbi_LL_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_LR_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_LR_2; ++j) {
+      shared->init_LR[i - 1 + shared->dim_init_LR_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_LR[shared->dim_tbi_LR_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_R_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_R_2; ++j) {
+      shared->init_R[i - 1 + shared->dim_init_R_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_R[shared->dim_tbi_R_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_SC_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_SC_2; ++j) {
+      shared->init_SC[i - 1 + shared->dim_init_SC_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_SC[shared->dim_tbi_SC_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_Tr_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_Tr_2; ++j) {
+      shared->init_Tr[i - 1 + shared->dim_init_Tr_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_Tr[shared->dim_tbi_Tr_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_init_U_1; ++i) {
+    for (int j = 1; j <= shared->dim_init_U_2; ++j) {
+      shared->init_U[i - 1 + shared->dim_init_U_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_U[shared->dim_tbi_U_1 * (j - 1) + i - 1]);
+    }
+  }
+  for (int i = 1; i <= shared->dim_D_1; ++i) {
+    for (int j = 1; j <= shared->dim_D_2; ++j) {
+      int k = 1;
+      shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_D_1; ++i) {
+    for (int j = 1; j <= shared->dim_D_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_LL_1; ++i) {
+    for (int j = 1; j <= shared->dim_LL_2; ++j) {
+      int k = 1;
+      shared->initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_LL_1; ++i) {
+    for (int j = 1; j <= shared->dim_LL_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_LR_1; ++i) {
+    for (int j = 1; j <= shared->dim_LR_2; ++j) {
+      int k = 1;
+      shared->initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_LR_1; ++i) {
+    for (int j = 1; j <= shared->dim_LR_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_N_1; ++i) {
+    for (int j = 1; j <= shared->dim_N_2; ++j) {
+      int k = 1;
+      shared->initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1] + shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1] + shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1] + shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] + shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] + shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1] + shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_N_1; ++i) {
+    for (int j = 1; j <= shared->dim_N_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_R_1; ++i) {
+    for (int j = 1; j <= shared->dim_R_2; ++j) {
+      int k = 1;
+      shared->initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_R_1; ++i) {
+    for (int j = 1; j <= shared->dim_R_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_SC_1; ++i) {
+    for (int j = 1; j <= shared->dim_SC_2; ++j) {
+      int k = 1;
+      shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_SC_1; ++i) {
+    for (int j = 1; j <= shared->dim_SC_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_Tr_1; ++i) {
+    for (int j = 1; j <= shared->dim_Tr_2; ++j) {
+      int k = 1;
+      shared->initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_Tr_1; ++i) {
+    for (int j = 1; j <= shared->dim_Tr_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = 0;
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_U_1; ++i) {
+    for (int j = 1; j <= shared->dim_U_2; ++j) {
+      int k = 1;
+      shared->initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1];
+    }
+  }
+  for (int i = 1; i <= shared->dim_U_1; ++i) {
+    for (int j = 1; j <= shared->dim_U_2; ++j) {
+      for (int k = 2; k <= 3; ++k) {
+        shared->initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = 0;
+      }
+    }
+  }
   return dust::pars_type<stocm>(shared, internal);
 }
 template <>
 cpp11::sexp dust_info<stocm>(const dust::pars_type<stocm>& pars) {
   const std::shared_ptr<const stocm::shared_type> shared = pars.shared;
-  cpp11::writable::strings nms({"tot_incidence", "beta_test", "cum_inf_flux", "cum_note_flux", "Sij", "U", "LR", "LL", "D", "SC", "Tr", "R", "N", "TB_deaths", "notifrate", "notes", "bg_deaths", "incidence", "Tijk"});
-  cpp11::writable::list dim(19);
+  cpp11::writable::strings nms({"tot_incidence", "beta_test", "cum_inf_ByPatch", "PrevByPatch", "cum_inf_flux", "cum_note_flux", "Sij", "U", "LR", "LL", "D", "SC", "Tr", "R", "N", "TB_deaths", "notifrate", "notes", "bg_deaths", "incidence", "Tijk"});
+  cpp11::writable::list dim(21);
   dim[0] = cpp11::writable::integers({1});
   dim[1] = cpp11::writable::integers({1});
-  dim[2] = cpp11::writable::integers({shared->dim_cum_inf_flux_1, shared->dim_cum_inf_flux_2});
-  dim[3] = cpp11::writable::integers({shared->dim_cum_note_flux_1, shared->dim_cum_note_flux_2});
-  dim[4] = cpp11::writable::integers({shared->dim_Sij_1, shared->dim_Sij_2});
-  dim[5] = cpp11::writable::integers({shared->dim_U_1, shared->dim_U_2, shared->dim_U_3});
-  dim[6] = cpp11::writable::integers({shared->dim_LR_1, shared->dim_LR_2, shared->dim_LR_3});
-  dim[7] = cpp11::writable::integers({shared->dim_LL_1, shared->dim_LL_2, shared->dim_LL_3});
-  dim[8] = cpp11::writable::integers({shared->dim_D_1, shared->dim_D_2, shared->dim_D_3});
-  dim[9] = cpp11::writable::integers({shared->dim_SC_1, shared->dim_SC_2, shared->dim_SC_3});
-  dim[10] = cpp11::writable::integers({shared->dim_Tr_1, shared->dim_Tr_2, shared->dim_Tr_3});
-  dim[11] = cpp11::writable::integers({shared->dim_R_1, shared->dim_R_2, shared->dim_R_3});
-  dim[12] = cpp11::writable::integers({shared->dim_N_1, shared->dim_N_2, shared->dim_N_3});
-  dim[13] = cpp11::writable::integers({shared->dim_TB_deaths_1, shared->dim_TB_deaths_2, shared->dim_TB_deaths_3});
-  dim[14] = cpp11::writable::integers({shared->dim_notifrate_1, shared->dim_notifrate_2, shared->dim_notifrate_3});
-  dim[15] = cpp11::writable::integers({shared->dim_notes_1, shared->dim_notes_2, shared->dim_notes_3});
-  dim[16] = cpp11::writable::integers({shared->dim_bg_deaths_1, shared->dim_bg_deaths_2, shared->dim_bg_deaths_3});
-  dim[17] = cpp11::writable::integers({shared->dim_incidence_1, shared->dim_incidence_2, shared->dim_incidence_3});
-  dim[18] = cpp11::writable::integers({shared->dim_Tijk_1, shared->dim_Tijk_2, shared->dim_Tijk_3});
+  dim[2] = cpp11::writable::integers({shared->dim_cum_inf_ByPatch});
+  dim[3] = cpp11::writable::integers({shared->dim_PrevByPatch});
+  dim[4] = cpp11::writable::integers({shared->dim_cum_inf_flux_1, shared->dim_cum_inf_flux_2});
+  dim[5] = cpp11::writable::integers({shared->dim_cum_note_flux_1, shared->dim_cum_note_flux_2});
+  dim[6] = cpp11::writable::integers({shared->dim_Sij_1, shared->dim_Sij_2});
+  dim[7] = cpp11::writable::integers({shared->dim_U_1, shared->dim_U_2, shared->dim_U_3});
+  dim[8] = cpp11::writable::integers({shared->dim_LR_1, shared->dim_LR_2, shared->dim_LR_3});
+  dim[9] = cpp11::writable::integers({shared->dim_LL_1, shared->dim_LL_2, shared->dim_LL_3});
+  dim[10] = cpp11::writable::integers({shared->dim_D_1, shared->dim_D_2, shared->dim_D_3});
+  dim[11] = cpp11::writable::integers({shared->dim_SC_1, shared->dim_SC_2, shared->dim_SC_3});
+  dim[12] = cpp11::writable::integers({shared->dim_Tr_1, shared->dim_Tr_2, shared->dim_Tr_3});
+  dim[13] = cpp11::writable::integers({shared->dim_R_1, shared->dim_R_2, shared->dim_R_3});
+  dim[14] = cpp11::writable::integers({shared->dim_N_1, shared->dim_N_2, shared->dim_N_3});
+  dim[15] = cpp11::writable::integers({shared->dim_TB_deaths_1, shared->dim_TB_deaths_2, shared->dim_TB_deaths_3});
+  dim[16] = cpp11::writable::integers({shared->dim_notifrate_1, shared->dim_notifrate_2, shared->dim_notifrate_3});
+  dim[17] = cpp11::writable::integers({shared->dim_notes_1, shared->dim_notes_2, shared->dim_notes_3});
+  dim[18] = cpp11::writable::integers({shared->dim_bg_deaths_1, shared->dim_bg_deaths_2, shared->dim_bg_deaths_3});
+  dim[19] = cpp11::writable::integers({shared->dim_incidence_1, shared->dim_incidence_2, shared->dim_incidence_3});
+  dim[20] = cpp11::writable::integers({shared->dim_Tijk_1, shared->dim_Tijk_2, shared->dim_Tijk_3});
   dim.names() = nms;
-  cpp11::writable::list index(19);
+  cpp11::writable::list index(21);
   index[0] = cpp11::writable::integers({1});
   index[1] = cpp11::writable::integers({2});
-  index[2] = integer_sequence(3, shared->dim_cum_inf_flux);
-  index[3] = integer_sequence(shared->offset_variable_cum_note_flux + 1, shared->dim_cum_note_flux);
-  index[4] = integer_sequence(shared->offset_variable_Sij + 1, shared->dim_Sij);
-  index[5] = integer_sequence(shared->offset_variable_U + 1, shared->dim_U);
-  index[6] = integer_sequence(shared->offset_variable_LR + 1, shared->dim_LR);
-  index[7] = integer_sequence(shared->offset_variable_LL + 1, shared->dim_LL);
-  index[8] = integer_sequence(shared->offset_variable_D + 1, shared->dim_D);
-  index[9] = integer_sequence(shared->offset_variable_SC + 1, shared->dim_SC);
-  index[10] = integer_sequence(shared->offset_variable_Tr + 1, shared->dim_Tr);
-  index[11] = integer_sequence(shared->offset_variable_R + 1, shared->dim_R);
-  index[12] = integer_sequence(shared->offset_variable_N + 1, shared->dim_N);
-  index[13] = integer_sequence(shared->offset_variable_TB_deaths + 1, shared->dim_TB_deaths);
-  index[14] = integer_sequence(shared->offset_variable_notifrate + 1, shared->dim_notifrate);
-  index[15] = integer_sequence(shared->offset_variable_notes + 1, shared->dim_notes);
-  index[16] = integer_sequence(shared->offset_variable_bg_deaths + 1, shared->dim_bg_deaths);
-  index[17] = integer_sequence(shared->offset_variable_incidence + 1, shared->dim_incidence);
-  index[18] = integer_sequence(shared->offset_variable_Tijk + 1, shared->dim_Tijk);
+  index[2] = integer_sequence(3, shared->dim_cum_inf_ByPatch);
+  index[3] = integer_sequence(shared->offset_variable_PrevByPatch + 1, shared->dim_PrevByPatch);
+  index[4] = integer_sequence(shared->offset_variable_cum_inf_flux + 1, shared->dim_cum_inf_flux);
+  index[5] = integer_sequence(shared->offset_variable_cum_note_flux + 1, shared->dim_cum_note_flux);
+  index[6] = integer_sequence(shared->offset_variable_Sij + 1, shared->dim_Sij);
+  index[7] = integer_sequence(shared->offset_variable_U + 1, shared->dim_U);
+  index[8] = integer_sequence(shared->offset_variable_LR + 1, shared->dim_LR);
+  index[9] = integer_sequence(shared->offset_variable_LL + 1, shared->dim_LL);
+  index[10] = integer_sequence(shared->offset_variable_D + 1, shared->dim_D);
+  index[11] = integer_sequence(shared->offset_variable_SC + 1, shared->dim_SC);
+  index[12] = integer_sequence(shared->offset_variable_Tr + 1, shared->dim_Tr);
+  index[13] = integer_sequence(shared->offset_variable_R + 1, shared->dim_R);
+  index[14] = integer_sequence(shared->offset_variable_N + 1, shared->dim_N);
+  index[15] = integer_sequence(shared->offset_variable_TB_deaths + 1, shared->dim_TB_deaths);
+  index[16] = integer_sequence(shared->offset_variable_notifrate + 1, shared->dim_notifrate);
+  index[17] = integer_sequence(shared->offset_variable_notes + 1, shared->dim_notes);
+  index[18] = integer_sequence(shared->offset_variable_bg_deaths + 1, shared->dim_bg_deaths);
+  index[19] = integer_sequence(shared->offset_variable_incidence + 1, shared->dim_incidence);
+  index[20] = integer_sequence(shared->offset_variable_Tijk + 1, shared->dim_Tijk);
   index.names() = nms;
   size_t len = shared->offset_variable_Tijk + shared->dim_Tijk;
   using namespace cpp11::literals;

@@ -16,8 +16,11 @@ ageMids[] <- user()
 agefracs[] <- user()
 
 ## sampling initializations
-popinit_byage[,] <- rbinom(floor(popinit[i]),agefracs[j]/(sum(agefracs)+1e-10)) #division just in case
+## popinit_byage[,] <- rbinom(floor(popinit[i]),agefracs[j]/(sum(agefracs)+1e-10)) #division just in case
+## popinit_byage[1:patch_dims, 1] <- rbinom(floor(popinit[i]), agefracs[1]/(sum(agefracs)+1e-10))
+## popinit_byage[1:patch_dims, 2:age_dims] <- rbinom(floor(popinit[i]) - sum(popinit_byage[i, 1:(j - 1)]),agefracs[j]/(sum(agefracs[j:patch_dims])+1e-10)) # NO
 
+popinit_byage[, ] <- floor(popinit[i] * agefracs[j] / (sum(agefracs) + 1e-10)) # division just in case
 
 ## TB initial state
 ## Initial ratio of TBI to disease states
@@ -41,13 +44,31 @@ tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
 
 
 ## NOTE total stochastic even given above
-init_U[, ] <- rbinom(popinit_byage[i, j], tbi_U[i, j])
-init_LR[,] <- rbinom(popinit_byage[i,j],tbi_LR[i,j])
-init_LL[,] <- rbinom(popinit_byage[i,j],tbi_LL[i,j])
-init_D[,] <- rbinom(popinit_byage[i,j],tbi_D[i,j])
-init_SC[,] <- rbinom(popinit_byage[i,j],tbi_SC[i,j])
-init_Tr[,] <- rbinom(popinit_byage[i,j],tbi_Tr[i,j])
-init_R[,] <- rbinom(popinit_byage[i,j],tbi_R[i,j])
+## init_U[, ] <- rbinom(popinit_byage[i, j], tbi_U[i, j])
+## init_LR[,] <- rbinom(popinit_byage[i,j],tbi_LR[i,j])
+## init_LL[,] <- rbinom(popinit_byage[i,j],tbi_LL[i,j])
+## init_D[,] <- rbinom(popinit_byage[i,j],tbi_D[i,j])
+## init_SC[,] <- rbinom(popinit_byage[i,j],tbi_SC[i,j])
+## init_Tr[,] <- rbinom(popinit_byage[i,j],tbi_Tr[i,j])
+## init_R[,] <- rbinom(popinit_byage[i,j],tbi_R[i,j])
+
+
+## init_U[, ] <- rbinom(popinit_byage[i, j], tbi_U[i, j])
+## init_LR[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j], tbi_LR[i, j] / (1 - tbi_U[i, j]))
+## init_LL[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j] - init_LR[i, j], tbi_LL[i, j] / (1 - tbi_U[i, j] - tbi_LR[i, j]))
+## init_D[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j] - init_LR[i, j] - init_LL[i, j], tbi_D[i, j] / (1 - tbi_U[i, j] - tbi_LR[i, j] - tbi_LL[i, j]))
+## init_SC[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j] - init_LR[i, j] - init_LL[i, j] - init_D[i, j], tbi_SC[i, j] / (1 - tbi_U[i, j] - tbi_LR[i, j] - tbi_LL[i, j]-tbi_D[i, j]))
+## init_Tr[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j] - init_LR[i, j] - init_LL[i, j] - init_D[i, j] - init_SC[i, j], tbi_Tr[i, j] / (1 - tbi_U[i, j] - tbi_LR[i, j] - tbi_LL[i, j] - tbi_D[i, j] - tbi_SC[i, j]))
+## init_R[, ] <- rbinom(popinit_byage[i, j] - init_U[i, j] - init_LR[i, j] - init_LL[i, j] - init_D[i, j] - init_SC[i, j] - init_Tr[i, j], tbi_R[i, j] / (1 - tbi_U[i, j] - tbi_LR[i, j] - tbi_LL[i, j] - tbi_D[i, j] - tbi_SC[i, j]))
+
+init_U[, ] <- round(popinit_byage[i, j] * tbi_U[i, j])
+init_LR[,] <- round(popinit_byage[i,j] * tbi_LR[i,j])
+init_LL[,] <- round(popinit_byage[i,j] * tbi_LL[i,j])
+init_D[,] <- round(popinit_byage[i,j] * tbi_D[i,j])
+init_SC[,] <- round(popinit_byage[i,j] * tbi_SC[i,j])
+init_Tr[,] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
+init_R[,] <- round(popinit_byage[i,j] * tbi_R[i,j])
+
 
 ## TODO this will need changing to account for HIV split:
 ## less burnin than plannedw
@@ -181,18 +202,21 @@ epsi <- user()
 
 ## Mixing/infectivity
 ## Mij = contact rate from patch i to patch j
-foitemp[, ] <- beta_seas * MM[i, j] * (sum(D[j, , ]) + relinf * sum(SC[j, , ])) / (sum(N[j, , ]) + 1e-15) # force of infection on patch i from patch j: contact rate x prev in patch j
-foi[] <- sum( foitemp[i,] ) #FOI on each patch i: sum over FOIs from each patch
-MM[,] <- user()           # Mixing matrix 
+## foitemp[1:patch_dims, 1:patch_dims] <- beta_seas * MM[i, j] * InfPrev[j]
+foitemp[1:patch_dims, 1:patch_dims] <- beta_seas * MM[i, j] * (sum(D[j, , ]) + relinf * sum(SC[j, , ])) / (sum(N[j, , ]) + 1e-15)
+## force of infection on patch i from patch j: contact rate x prev in patch j
+foi[1:patch_dims] <- sum( foitemp[i,] ) #FOI on each patch i: sum over FOIs from each patch
+MM[,] <- user()           # Mixing matrix
 relinf <- user(1)         # Relative infectiousness of SC relative to CD
 IRR[] <- user()
 
 ## flux variables
 initial(cum_inf_flux[, ]) <- 0 # initialize cumulative fluxes
+initial(cum_inf_ByPatch[ ]) <- 0 # initialize cumulative fluxes
 initial(cum_note_flux[, ]) <- 0 # initialize cumulative fluxes
 initial(Tijk[, , ]) <- 0
 initial(Sij[, ]) <- 0
-
+initial(PrevByPatch[]) <- 0
 
 
 
@@ -423,7 +447,10 @@ dim(tbi_R) <- c( patch_dims, age_dims )
 dim(InfsByPatchPatch) <- c(patch_dims, patch_dims)
 dim(NotesByPatchPatch) <- c(patch_dims, patch_dims)
 dim(InfsByPatch) <- c(patch_dims)
+dim(PrevByPatch) <- c(patch_dims)
+dim(InfPrev) <- c(patch_dims)
 dim(NotesByPatch) <- c(patch_dims)
+dim(cum_inf_ByPatch) <- c(patch_dims)
 dim(cum_inf_flux) <- c(patch_dims, patch_dims)
 dim(cum_note_flux) <- c(patch_dims, patch_dims)
 dim(A) <- 6
@@ -604,15 +631,24 @@ Udeaths[, , ] <- Nevents_U[i, j, k] - age_out_U[i, j, k] - HIV_out_U[i, j, k] - 
 
 ## ---------------------- extra calculations associated with infection fluxes
 ## number of infections in patch i this step
-InfsByPatch[] <- sum(Uinfs[i, , ]) + sum(LLinfs[i,,]) + sum(Rinfs[i,,])
-InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol))
+InfsByPatch[1:patch_dims] <- sum(Uinfs[i, , ]) + sum(LLinfs[i,,]) + sum(Rinfs[i,,])
+## InfsByPatchPatch[, ] <- rbinom(InfsByPatch[i], foitemp[i, j] / (foi[i] + tol)) # NO
+
+## correct looped binom implementation of multinomial
+InfsByPatchPatch[1:patch_dims, 1] <- rbinom(InfsByPatch[i], foitemp[i, 1] / (foi[i] + tol))
+InfsByPatchPatch[1:patch_dims, 2:patch_dims] <- rbinom(InfsByPatch[i] - sum(InfsByPatchPatch[i, 1:(j - 1)]), foitemp[i, j] / (sum(foitemp[i, j:patch_dims]) + tol)) # NO
+
+update(cum_inf_ByPatch[]) <- cum_inf_ByPatch[i] + InfsByPatch[i]
 update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
+InfPrev[1:patch_dims] <- (sum(D[i, , ]) + relinf * sum(SC[i, , ])) / (sum(N[i, , ]) + 1e-15)
+update(PrevByPatch[1:patch_dims]) <- InfPrev[i]
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
 ## NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], ellij[i, j] / (elli[i] + tol))
 ## Pellij[, ] <- if (elli[i] > tol && ellij[i, j] > tol) ellij[i, j] / elli[i] else 0
 Pellij[, ] <- foitemp[i, j] / (foi[i] + tol) #TODO BUG
 NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], Pellij[i, j])
-update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
+## update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
+update(cum_note_flux[, ]) <- cum_note_flux[i, j] + foitemp[i, j]
 
 ##############################
 ##### 2: Infected early ######
