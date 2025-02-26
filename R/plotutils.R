@@ -224,7 +224,8 @@ plot_compare_noterate_agrgt <- function( Y,
     ggplot2::facet_wrap(~patch) +
     ggplot2::ylab("Notification rate per month") +
     ggplot2::xlab("Month") +
-    ggplot2::ggtitle("Real data, median + 50% PI")
+    ggplot2::ggtitle("Real data, median + 50% PI")+
+    ggplot2::theme_light()
   if(realdata)
     p <- p + ggplot2::geom_point(data = real_dat, col = 2, shape = 1)
   print(p)
@@ -440,30 +441,44 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @param chain_step_num chain step number
 #' @param out_type output type
 #' @param separate separate plot?
-#' @param by_age by age?
+#' @param by_age by age? (default FALSE)
+#' @param by_hiv by HIV? (default FALSE)
 #' @param wrap display with facet wrapping (default TRUE) or grids
 #' @return ggplot2
 #' @import data.table
 #' @importFrom ggh4x facet_grid2
 #' @importFrom ggh4x facet_wrap2
 #' @export
-plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=FALSE, wrap=TRUE){
-  
+plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=FALSE, by_HIV=FALSE, wrap=TRUE){
+
   D <- extract.pops( Y, chain_step_num, out_type )
   by_comp <- 'patch'
   dt <- 1/12
 
   if( separate==FALSE ){
-    D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
-    D <- D[,.(value=sum(value)),by=.(step,patch,age,hiv)]
+    if(by_HIV){
+      D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
+      D <- D[,.(value=sum(value)),by=.(step,patch,age,hiv)]
+    } else {
+      D <- D[,.(value=sum(value)),by=.(step,patch,age)]
+    }
   }
   if( by_age==FALSE ){
-    D <- D[,.(value=sum(value)),by=.(step,patch,hiv)]
+    if(by_HIV){
+      D <- D[,.(value=sum(value)),by=.(step,patch,hiv)]
+    } else{
+      D <- D[,.(value=sum(value)),by=.(step,patch)]
+    }
   } else {
     by_comp <- c( by_comp, 'age' )
   }
 
-  plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))+
+  if(by_HIV){
+    plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))
+  } else {
+    plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value))
+  }
+  plt <- plt+
     ggplot2::geom_line()+
     ggplot2::theme_light()+
     ggplot2::xlab('Year')+

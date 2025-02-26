@@ -10,6 +10,7 @@ plot_TB_dynamics(
   out_type = "incidence",
   separate = FALSE,
   by_age = FALSE,
+  by_HIV = FALSE,
   wrap = TRUE
 )
 }
@@ -22,9 +23,11 @@ plot_TB_dynamics(
 
 \item{separate}{separate plot?}
 
-\item{by_age}{by age?}
+\item{by_age}{by age? (default FALSE)}
 
 \item{wrap}{display with facet wrapping (default TRUE) or grids}
+
+\item{by_hiv}{by HIV? (default FALSE)}
 }
 \value{
 ggplot2
