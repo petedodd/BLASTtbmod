@@ -29,6 +29,7 @@ extract.pops <- function(Y, chain_step_num = 1, out_type = "N") {
   } else {
     names(D)[1:3] <- c("variable","particle","step")
   }
+  D[!grepl(",",variable),variable:=gsub("\\]",",,\\]",variable)]#to allow handing of patch totals
   D[, c("patch", "acatno", "hivno") := data.table::tstrsplit(variable, split = ",")]
   D[, patch := as.integer(gsub(out_type, "", patch))]
   D[, acatno := as.integer(acatno)]
@@ -449,8 +450,11 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @importFrom ggh4x facet_grid2
 #' @importFrom ggh4x facet_wrap2
 #' @export
-plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=FALSE, by_HIV=FALSE, wrap=TRUE){
+plot_TB_dynamics <- function( Y, chain_step_num=1,
+                             out_type='incidence', separate=FALSE,
+                             by_age=FALSE, by_HIV=FALSE, wrap=TRUE){
 
+  ## TODO include multi
   D <- extract.pops( Y, chain_step_num, out_type )
   by_comp <- 'patch'
   dt <- 1/12
@@ -482,7 +486,7 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
     ggplot2::geom_line()+
     ggplot2::theme_light()+
     ggplot2::xlab('Year')+
-    ggplot2::ylab('TB incidence')+
+    ggplot2::ylab(out_type)+
     ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
   if(wrap){
     plt <- plt +  ggh4x::facet_wrap2( by_comp,
