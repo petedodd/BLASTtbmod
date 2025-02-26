@@ -224,6 +224,10 @@ initial(Sij[, ]) <- 0
 initial(PrevByPatch[]) <- 0
 
 
+## patch trackers
+initial(incidence_bypatch[]) <- 0
+initial(prevalence_bypatch[]) <- 0
+
 ## ============ ACF =======
 ACFhaz0[,] <- user() #asymptomatic
 dim(ACFhaz0) <- c(patch_dims,sim_length)
@@ -471,6 +475,9 @@ dim(Sij) <- c(patch_dims, patch_dims)
 dim(ellij) <- c(patch_dims, patch_dims)
 dim(elli) <- c(patch_dims)
 dim(Pellij) <- c(patch_dims, patch_dims)
+
+dim(incidence_bypatch) <- patch_dims
+dim(prevalence_bypatch) <- patch_dims
 
 
 ##########
@@ -1232,6 +1239,9 @@ update(bg_deaths[,,]) <- Udeaths[i,j,k] + LRdeaths[i,j,k] + LLdeaths[i,j,k] +
   Ddeaths[i,j,k] + SCdeaths[i,j,k] + Trdeaths[i,j,k] + Rdeaths[i,j,k]
 update(incidence[,,]) <- progFast[i,j,k] + progSlow[i,j,k] + relapse[i,j,k]
 update(tot_incidence) <- sum(progFast[,,]) + sum(progSlow[,,]) + sum(relapse[,,])
+
+update(incidence_bypatch[]) <- 1e5 * (sum(progFast[i,,]) + sum(progSlow[i,,]) + sum(relapse[i,,])) / (sum(N[i, , ]) + 1e-15)
+update(prevalence_bypatch[]) <- 1e5 * (sum(D[i, , ]) + 1* sum(SC[i, , ])) / (sum(N[i, , ]) + 1e-15)
 
 ## ## patch-level total notifications,popn, and rates
 ## pnotes[] <- sum(detection[i, , ] + detection_SC[i, , ])
