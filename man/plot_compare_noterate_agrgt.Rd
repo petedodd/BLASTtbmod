@@ -4,7 +4,12 @@
 \alias{plot_compare_noterate_agrgt}
 \title{Plot average notification rates & compare with real data}
 \usage{
-plot_compare_noterate_agrgt(Y, n_chain_steps = 100, agrgt_by = c("patch"))
+plot_compare_noterate_agrgt(
+  Y,
+  n_chain_steps = 100,
+  agrgt_by = c("patch"),
+  realdata = TRUE
+)
 }
 \arguments{
 \item{Y}{input data}
@@ -12,6 +17,8 @@ plot_compare_noterate_agrgt(Y, n_chain_steps = 100, agrgt_by = c("patch"))
 \item{n_chain_steps}{chain steps}
 
 \item{agrgt_by}{aggregate by}
+
+\item{realdata}{logical (default TRUE) on whether to show real data points}
 }
 \value{
 ggplot2

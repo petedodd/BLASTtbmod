@@ -136,7 +136,9 @@ get.parms <- function(start_year,
     dur = qlnorm(0.5, 1.1, 0.2), # Duration untreated TB - dur
     tfr = qbeta(0.5, 2.71, 87.55), # CFR treated TB - tfr (txf)
     cfr = qbeta(0.5, 25.48, 33.78), # CFR untreated TB - cfr (cfrn)
-    ari0 = ari0 # Initial condition parameter - ?? (ari0)
+    ari0 = ari0, # Initial condition parameter - ?? (ari0)
+    ACFhaz0 = matrix(0.0,nrow=patch_dims,ncol=sim_length), #asymp ACF haz
+    ACFhaz1 = matrix(0.0,nrow=patch_dims,ncol=sim_length)  #symp ACF haz
   )
   return(parms)
 }

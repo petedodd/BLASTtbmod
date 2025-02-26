@@ -9,7 +9,8 @@ plot_TB_dynamics(
   chain_step_num = 1,
   out_type = "incidence",
   separate = FALSE,
-  by_age = F
+  by_age = FALSE,
+  wrap = TRUE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plot_TB_dynamics(
 \item{separate}{separate plot?}
 
 \item{by_age}{by age?}
+
+\item{wrap}{display with facet wrapping (default TRUE) or grids}
 }
 \value{
 ggplot2

@@ -182,15 +182,17 @@ plot_compare_demog <- function(Y,
 #' @param Y input data
 #' @param n_chain_steps chain steps
 #' @param agrgt_by aggregate by
+#' @param realdata logical (default TRUE) on whether to show real data points
 #' @return ggplot2
 #' @import data.table
 #' @import ggplot2
 #' @importFrom dplyr group_by summarise across all_of
 #' @importFrom magrittr %>%
 #' @export
-plot_compare_noterate_agrgt <- function( Y, 
+plot_compare_noterate_agrgt <- function( Y,
                                          n_chain_steps = 100,
-                                         agrgt_by = c( 'patch' )){
+                                        agrgt_by = c( 'patch' ),
+                                        realdata=TRUE){
 
   D1 <- extract.pops.multi( Y, n_chain_steps, out_type='N' )
   D1[,'subcomp' := NULL ]
@@ -220,10 +222,11 @@ plot_compare_noterate_agrgt <- function( Y,
     ggplot2::geom_ribbon(alpha = 0.3) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~patch) +
-    ggplot2::geom_point(data = real_dat, col = 2, shape = 1) +
     ggplot2::ylab("Notification rate per month") +
     ggplot2::xlab("Month") +
     ggplot2::ggtitle("Real data, median + 50% PI")
+  if(realdata)
+    p <- p + ggplot2::geom_point(data = real_dat, col = 2, shape = 1)
   print(p)
 }
 
@@ -438,11 +441,13 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @param out_type output type
 #' @param separate separate plot?
 #' @param by_age by age?
+#' @param wrap display with facet wrapping (default TRUE) or grids
 #' @return ggplot2
 #' @import data.table
 #' @importFrom ggh4x facet_grid2
+#' @importFrom ggh4x facet_wrap2
 #' @export
-plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=F){
+plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separate=FALSE, by_age=FALSE, wrap=TRUE){
   
   D <- extract.pops( Y, chain_step_num, out_type )
   by_comp <- 'patch'
@@ -457,15 +462,22 @@ plot_TB_dynamics <- function( Y, chain_step_num=1, out_type='incidence', separat
   } else {
     by_comp <- c( by_comp, 'age' )
   }
-  
-  ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))+
+
+  plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))+
     ggplot2::geom_line()+
-    ggh4x::facet_grid2( by_comp,
-                 independent = TRUE,
-                 scales='free')+
     ggplot2::theme_light()+
     ggplot2::xlab('Year')+
-    ggplot2::ylab('TB incidence')
+    ggplot2::ylab('TB incidence')+
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  if(wrap){
+    plt <- plt +  ggh4x::facet_wrap2( by_comp,
+                                     scales='free')
+  } else{
+    plt <- plt + ggh4x::facet_grid2( by_comp,
+                                    independent = TRUE,
+                                    scales='free')
+  }
+  plt
 }
 
 
