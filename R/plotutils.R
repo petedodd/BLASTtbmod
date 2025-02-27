@@ -67,7 +67,7 @@ extract.pops.multi <- function( Y, n_chain_steps = 100, out_type = 'N' ){
     ))
   }
   samp <- sample(dim(Y)[2], n_chain_steps, replace = FALSE)
-  ## Rearrange & sample desired output 
+  ## Rearrange & sample desired output
   rownames(Y) <- BLASTtbmod::get_cols
   D <- data.table::as.data.table( Y[, samp, ] )
   selnmz <- grep( pattern = paste0( out_type, '\\[' ), D$V1 )
@@ -253,7 +253,6 @@ plot_compare_noterate_agrgt <- function( Y,
 #' @importFrom magrittr %>%
 #' @return ggplot2
 #' @export
-
 plot_pops_dynamic <- function( Y, 
                                chain_step_num=1, 
                                out_type='N',
@@ -266,9 +265,8 @@ plot_pops_dynamic <- function( Y,
     dplyr::group_by( dplyr::across( dplyr::all_of( grp_vars ))) %>%
     dplyr::summarise( tot_pop = sum(value))
   Dplot$default_col <- 1
-  
   dt <- 1 / 12
-  
+
   if( 'age' %in% by_comp ){
     by_comp <- by_comp[-which(by_comp=='age')]
     col_age <- T
@@ -309,7 +307,6 @@ plot_pops_dynamic <- function( Y,
 
 ## ## demographic snapshot (bar)
 ## demo.snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL ){
-  
 ##   D <- extract.pops( Y, chain_step_num, out_type )
 ##   if( length(timestep > 0)){
 ##     p <- ggplot( D[ step==timestep, ], aes(age,value))
@@ -328,7 +325,7 @@ plot_pops_dynamic <- function( Y,
 ##       }
 ##     }
 ##   }
-  
+
 ##   p <- p + geom_bar(stat='identity')+
 ##     facet_wrap(~patch)+
 ##     scale_y_continuous(label=comma)+
@@ -459,8 +456,21 @@ plot_TB_dynamics <- function( Y, chain_step_num=1,
                              by_age=FALSE, by_HIV=FALSE, wrap=TRUE,
                              start_year=2015){
 
-  ## TODO include multi
+  ## extract relevant data
   D <- extract.pops( Y, chain_step_num, out_type )
+
+  ## ## version with multi
+  ## D <- extract.pops.multi( Y, dim(Y)[2], out_type )
+  ## names(D)[names(D)==out_type] <- "value"
+  ## D[,varname:=out_type]
+  ## D[,step:=t]
+  ## eps <- 0.25
+  ## D <- D[ ,.( mid=median( noterate ),
+  ##            lo = quantile( noterate, eps ),
+  ##            hi = quantile( noterate, 1-eps )),
+  ##        by=.(t, patch )]
+  ## TODO this will need adaptation of plotting code below (see noterate for eg)
+
   by_comp <- 'patch'
   dt <- 1/12
   D <- D[step>1]
