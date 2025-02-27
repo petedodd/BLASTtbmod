@@ -184,6 +184,7 @@ plot_compare_demog <- function(Y,
 #' @param n_chain_steps chain steps
 #' @param agrgt_by aggregate by
 #' @param realdata logical (default TRUE) on whether to show real data points
+#' @param start_year start for scale (default 2015)
 #' @return ggplot2
 #' @import data.table
 #' @import ggplot2
@@ -193,7 +194,8 @@ plot_compare_demog <- function(Y,
 plot_compare_noterate_agrgt <- function( Y,
                                          n_chain_steps = 100,
                                         agrgt_by = c( 'patch' ),
-                                        realdata=TRUE){
+                                        realdata=TRUE,
+                                        start_year = 2015){
 
   D1 <- extract.pops.multi( Y, n_chain_steps, out_type='N' )
   D1[,'subcomp' := NULL ]
@@ -215,18 +217,19 @@ plot_compare_noterate_agrgt <- function( Y,
                lo = quantile( noterate, eps ),
                hi = quantile( noterate, 1-eps )),
             by=.(t, patch )]
-
+  aggD <- aggD[t>1]
   real_dat = BLASTtbmod::md7
   real_dat[[ 'patch' ]] <- paste( 'Patch', md7$comid )
 
-  p <- ggplot2::ggplot( aggD, aes( t, y = mid, ymin = lo, ymax = hi)) +
+  p <- ggplot2::ggplot( aggD, aes( t/12+start_year, y = mid, ymin = lo, ymax = hi)) +
     ggplot2::geom_ribbon(alpha = 0.3) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~patch) +
     ggplot2::ylab("Notification rate per month") +
     ggplot2::xlab("Month") +
     ggplot2::ggtitle("Real data, median + 50% PI")+
-    ggplot2::theme_light()
+    ggplot2::theme_light()+
+    ggplot2::expand_limits(y=c(0,NA))
   if(realdata)
     p <- p + ggplot2::geom_point(data = real_dat, col = 2, shape = 1)
   print(p)
@@ -445,6 +448,7 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @param by_age by age? (default FALSE)
 #' @param by_hiv by HIV? (default FALSE)
 #' @param wrap display with facet wrapping (default TRUE) or grids
+#' @param start_year start for scale (default 2015)
 #' @return ggplot2
 #' @import data.table
 #' @importFrom ggh4x facet_grid2
@@ -452,42 +456,46 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @export
 plot_TB_dynamics <- function( Y, chain_step_num=1,
                              out_type='incidence', separate=FALSE,
-                             by_age=FALSE, by_HIV=FALSE, wrap=TRUE){
+                             by_age=FALSE, by_HIV=FALSE, wrap=TRUE,
+                             start_year=2015){
 
   ## TODO include multi
   D <- extract.pops( Y, chain_step_num, out_type )
   by_comp <- 'patch'
   dt <- 1/12
+  D <- D[step>1]
+  D[,yr:=step*dt+start_year]
 
   if( separate==FALSE ){
     if(by_HIV){
       D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
-      D <- D[,.(value=sum(value)),by=.(step,patch,age,hiv)]
+      D <- D[,.(value=sum(value)),by=.(yr,patch,age,hiv)]
     } else {
-      D <- D[,.(value=sum(value)),by=.(step,patch,age)]
+      D <- D[,.(value=sum(value)),by=.(yr,patch,age)]
     }
   }
   if( by_age==FALSE ){
     if(by_HIV){
-      D <- D[,.(value=sum(value)),by=.(step,patch,hiv)]
+      D <- D[,.(value=sum(value)),by=.(yr,patch,hiv)]
     } else{
-      D <- D[,.(value=sum(value)),by=.(step,patch)]
+      D <- D[,.(value=sum(value)),by=.(yr,patch)]
     }
   } else {
     by_comp <- c( by_comp, 'age' )
   }
 
   if(by_HIV){
-    plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value, col=hiv))
+    plt <- ggplot2::ggplot(D, aes(yr, value, col=hiv))
   } else {
-    plt <- ggplot2::ggplot(D, aes(step*dt+start_year, value))
+    plt <- ggplot2::ggplot(D, aes(yr, value))
   }
   plt <- plt+
     ggplot2::geom_line()+
     ggplot2::theme_light()+
     ggplot2::xlab('Year')+
     ggplot2::ylab(out_type)+
-    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+    ggplot2::expand_limits(y=c(0,NA))
   if(wrap){
     plt <- plt +  ggh4x::facet_wrap2( by_comp,
                                      scales='free')

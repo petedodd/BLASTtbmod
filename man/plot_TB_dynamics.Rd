@@ -11,7 +11,8 @@ plot_TB_dynamics(
   separate = FALSE,
   by_age = FALSE,
   by_HIV = FALSE,
-  wrap = TRUE
+  wrap = TRUE,
+  start_year = 2015
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ plot_TB_dynamics(
 \item{by_age}{by age? (default FALSE)}
 
 \item{wrap}{display with facet wrapping (default TRUE) or grids}
+
+\item{start_year}{start for scale (default 2015)}
 
 \item{by_hiv}{by HIV? (default FALSE)}
 }

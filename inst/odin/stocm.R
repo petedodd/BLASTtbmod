@@ -25,15 +25,31 @@ popinit_byage[, ] <- floor(popinit[i] * agefracs[j] / (sum(agefracs) + 1e-10)) #
 ## TB initial state
 ## Initial ratio of TBI to disease states
 initD[, ] <- user() # NOTE now taken as input: note mix of D,SC,Tr,R below
+
 initPrev[,] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2)             #non-LTBI=U
-initLL[, ] <- (1.0 - initPrev[i, j]) * exp(-2 * ari0) * (1 - 5 * initD[i, j] / 2)
-initF[, ] <- (1.0 - initPrev[i, j]) * (1.0 - exp(-2 * ari0)) * (1 - 5 * initD[i, j] / 2)
+initLL[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2)             #non-LTBI=U
+initF[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2)             #non-LTBI=U
 
 ## ## fraction TBI initially R or LR: as ~2 year's of FOI/TBI
 ## initF[,] <- if(initPrev[i,j]>tol) (1-exp(-2*ari0)) / initPrev[i,j] else 0
 
 ## safety: should be 1
 initDenom[, ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
+
+## print("initD: {initD[,,]}",when=sum(initD)>0)
+## print("initPrev: {initPrev[,,]}",when=sum(initPrev)>0)
+## print("initLL: {initLL[,,]}",when=sum(initLL)>0)
+## print("initF: {initF[,,]}",when=sum(initF)>0)
+
+
+## tbi_U[, ] <-  (initPrev[i, j]) / (initDenom[i, j]+tol)
+## tbi_LR[,] <- (initF[i,j])/(initDenom[i,j]+tol)
+## tbi_LL[,] <-  (initLL[i,j])/(initDenom[i,j]+tol)
+## tbi_D[,] <-  (initD[i,j]/2)/(initDenom[i,j]+tol)
+## tbi_SC[,] <-  (initD[i,j]/2)/(initDenom[i,j]+tol)
+## tbi_Tr[,] <-  (initD[i,j]/2)/(initDenom[i,j]+tol)
+## tbi_R[,] <- (initD[i,j])/(initDenom[i,j]+tol)
+
 tbi_U[, ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
 tbi_LR[,] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
 tbi_LL[,] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0

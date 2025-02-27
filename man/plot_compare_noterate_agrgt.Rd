@@ -8,7 +8,8 @@ plot_compare_noterate_agrgt(
   Y,
   n_chain_steps = 100,
   agrgt_by = c("patch"),
-  realdata = TRUE
+  realdata = TRUE,
+  start_year = 2015
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ plot_compare_noterate_agrgt(
 \item{agrgt_by}{aggregate by}
 
 \item{realdata}{logical (default TRUE) on whether to show real data points}
+
+\item{start_year}{start for scale (default 2015)}
 }
 \value{
 ggplot2

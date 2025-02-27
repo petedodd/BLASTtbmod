@@ -3990,6 +3990,16 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
       shared->dtct_rate_SC[i - 1 + shared->dim_dtct_rate_SC_1 * (j - 1)] = shared->cdr_SC / (real_type) (shared->dur * (1 - shared->cdr_SC)) + shared->ACFhaz0[shared->dim_ACFhaz0_1 * (j - 1) + i - 1];
     }
   }
+  for (int i = 1; i <= shared->dim_initF_1; ++i) {
+    for (int j = 1; j <= shared->dim_initF_2; ++j) {
+      shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (1 - dust::math::exp(- shared->ari0 * shared->ageMids[j - 1])) * (1 - dust::math::exp(- 2 * shared->ari0)) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
+    }
+  }
+  for (int i = 1; i <= shared->dim_initLL_1; ++i) {
+    for (int j = 1; j <= shared->dim_initLL_2; ++j) {
+      shared->initLL[i - 1 + shared->dim_initLL_1 * (j - 1)] = (1 - dust::math::exp(- shared->ari0 * shared->ageMids[j - 1])) * dust::math::exp(- 2 * shared->ari0) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
+    }
+  }
   for (int i = 1; i <= shared->dim_initPrev_1; ++i) {
     for (int j = 1; j <= shared->dim_initPrev_2; ++j) {
       shared->initPrev[i - 1 + shared->dim_initPrev_1 * (j - 1)] = dust::math::exp(- shared->ari0 * shared->ageMids[j - 1]) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
@@ -4000,52 +4010,16 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
       shared->popinit_byage[i - 1 + shared->dim_popinit_byage_1 * (j - 1)] = dust::math::floor(shared->popinit[i - 1] * shared->agefracs[j - 1] / (real_type) (odin_sum1<real_type>(shared->agefracs.data(), 0, shared->dim_agefracs) + static_cast<real_type>(1e-10)));
     }
   }
-  for (int i = 1; i <= shared->dim_initF_1; ++i) {
-    for (int j = 1; j <= shared->dim_initF_2; ++j) {
-      shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (1 - shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) * (1 - dust::math::exp(- 2 * shared->ari0)) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
-    }
-  }
-  for (int i = 1; i <= shared->dim_initLL_1; ++i) {
-    for (int j = 1; j <= shared->dim_initLL_2; ++j) {
-      shared->initLL[i - 1 + shared->dim_initLL_1 * (j - 1)] = (1 - shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1]) * dust::math::exp(- 2 * shared->ari0) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
-    }
-  }
-  shared->Pdelta = shared->dtct_rate[shared->dim_dtct_rate_1 * 0 + 0];
   for (int i = 1; i <= shared->dim_initDenom_1; ++i) {
     for (int j = 1; j <= shared->dim_initDenom_2; ++j) {
       shared->initDenom[i - 1 + shared->dim_initDenom_1 * (j - 1)] = shared->initPrev[shared->dim_initPrev_1 * (j - 1) + i - 1] + shared->initF[shared->dim_initF_1 * (j - 1) + i - 1] + shared->initLL[shared->dim_initLL_1 * (j - 1) + i - 1] + 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2;
     }
   }
+  shared->Pdelta = shared->dtct_rate[shared->dim_dtct_rate_1 * 0 + 0];
   shared->ppF = shared->Pdelta * shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha));
   shared->ppG = - shared->Pdelta * shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon));
   shared->ppH = shared->Pdelta * shared->Pgamma * (shared->ppB / (real_type) (shared->Pgamma - shared->Pepsilon) - shared->ppC / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma);
   shared->ppJ = shared->Pdelta * shared->Pgamma * (shared->ppC * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha) + shared->ppB * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pepsilon) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma)) / (real_type) (shared->Pgamma - shared->Pepsilon));
-  {
-     int i = 1;
-     shared->zk[i - 1] = shared->Pomega + shared->Pdelta + shared->Pmu;
-  }
-  {
-     int i = 2;
-     shared->zk[i - 1] = shared->Psigma + shared->Palpha + shared->Pmu;
-  }
-  {
-     int i = 3;
-     shared->zk[i - 1] = shared->Pepsilon + shared->Pmu;
-  }
-  {
-     int i = 4;
-     shared->zk[i - 1] = shared->Pgamma + shared->Pmu;
-  }
-  {
-     int i = 5;
-     shared->zk[i - 1] = shared->Prho + shared->Pmu;
-  }
-  {
-     int i = 6;
-     shared->zk[i - 1] = shared->Ptau + shared->Pmu;
-  }
-  shared->A0 = shared->Prho * shared->Ptau * (shared->ppJ / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)));
-  shared->ppK = - shared->ppF / (real_type) (shared->Ptau - shared->Psigma - shared->Palpha) - shared->ppG / (real_type) (shared->Ptau - shared->Pepsilon) - shared->ppH / (real_type) (shared->Ptau - shared->Pgamma) - shared->ppJ / (real_type) (shared->Ptau - shared->Pomega - shared->Pdelta);
   for (int i = 1; i <= shared->dim_tbi_D_1; ++i) {
     for (int j = 1; j <= shared->dim_tbi_D_2; ++j) {
       shared->tbi_D[i - 1 + shared->dim_tbi_D_1 * (j - 1)] = (shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] > shared->tol ? (shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2) / (real_type) shared->initDenom[shared->dim_initDenom_1 * (j - 1) + i - 1] : 0);
@@ -4083,28 +4057,29 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   {
      int i = 1;
-     shared->A[i - 1] = - shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) + shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon)) - shared->Pgamma * (shared->ppB / (real_type) (shared->Pgamma - shared->Pepsilon) - shared->ppC / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) - shared->Prho * shared->Ptau * (shared->ppF * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha)) + shared->ppG * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pepsilon) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon)) + shared->ppH * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma)) + shared->ppJ * (- 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)) + shared->ppK * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Ptau) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) (shared->Prho - shared->Ptau));
+     shared->zk[i - 1] = shared->Pomega + shared->Pdelta + shared->Pmu;
   }
   {
      int i = 2;
-     shared->A[i - 1] = shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) + shared->Prho * shared->Ptau * (shared->ppF / (real_type) (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha));
+     shared->zk[i - 1] = shared->Psigma + shared->Palpha + shared->Pmu;
   }
   {
      int i = 3;
-     shared->A[i - 1] = - shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon)) + shared->Prho * shared->Ptau * (shared->ppG / (real_type) (shared->Pomega + shared->Pdelta - shared->Pepsilon)) / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon));
+     shared->zk[i - 1] = shared->Pepsilon + shared->Pmu;
   }
   {
      int i = 4;
-     shared->A[i - 1] = shared->Pgamma * (shared->ppB / (real_type) (shared->Pgamma - shared->Pepsilon) - shared->ppC / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) + shared->Prho * shared->Ptau * (shared->ppH / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma)) / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma));
+     shared->zk[i - 1] = shared->Pgamma + shared->Pmu;
   }
   {
      int i = 5;
-     shared->A[i - 1] = - shared->Prho * shared->Ptau * (shared->ppF / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha)) + shared->ppG / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon)) + shared->ppH / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma)) + shared->ppJ / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)) + shared->ppK / (real_type) (shared->Prho - shared->Ptau)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho);
+     shared->zk[i - 1] = shared->Prho + shared->Pmu;
   }
   {
      int i = 6;
-     shared->A[i - 1] = shared->Prho * shared->Ptau * ((shared->ppK / (real_type) (shared->Pomega + shared->Pdelta - shared->Ptau)) / (real_type) (shared->Prho - shared->Ptau));
+     shared->zk[i - 1] = shared->Ptau + shared->Pmu;
   }
+  shared->A0 = shared->Prho * shared->Ptau * (shared->ppJ / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)));
   for (int i = 1; i <= shared->dim_init_D_1; ++i) {
     for (int j = 1; j <= shared->dim_init_D_2; ++j) {
       shared->init_D[i - 1 + shared->dim_init_D_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_D[shared->dim_tbi_D_1 * (j - 1) + i - 1]);
@@ -4139,6 +4114,31 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
     for (int j = 1; j <= shared->dim_init_U_2; ++j) {
       shared->init_U[i - 1 + shared->dim_init_U_1 * (j - 1)] = dust::math::round(shared->popinit_byage[shared->dim_popinit_byage_1 * (j - 1) + i - 1] * shared->tbi_U[shared->dim_tbi_U_1 * (j - 1) + i - 1]);
     }
+  }
+  shared->ppK = - shared->ppF / (real_type) (shared->Ptau - shared->Psigma - shared->Palpha) - shared->ppG / (real_type) (shared->Ptau - shared->Pepsilon) - shared->ppH / (real_type) (shared->Ptau - shared->Pgamma) - shared->ppJ / (real_type) (shared->Ptau - shared->Pomega - shared->Pdelta);
+  {
+     int i = 1;
+     shared->A[i - 1] = - shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) + shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon)) - shared->Pgamma * (shared->ppB / (real_type) (shared->Pgamma - shared->Pepsilon) - shared->ppC / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) - shared->Prho * shared->Ptau * (shared->ppF * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha)) + shared->ppG * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pepsilon) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon)) + shared->ppH * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma)) + shared->ppJ * (- 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)) + shared->ppK * (1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Ptau) - 1 / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho)) / (real_type) (shared->Prho - shared->Ptau));
+  }
+  {
+     int i = 2;
+     shared->A[i - 1] = shared->Pgamma * shared->ppC / (real_type) ((shared->Pgamma - shared->Psigma - shared->Palpha) * (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) + shared->Prho * shared->Ptau * (shared->ppF / (real_type) (shared->Pomega + shared->Pdelta - shared->Psigma - shared->Palpha)) / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha));
+  }
+  {
+     int i = 3;
+     shared->A[i - 1] = - shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon)) + shared->Prho * shared->Ptau * (shared->ppG / (real_type) (shared->Pomega + shared->Pdelta - shared->Pepsilon)) / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon));
+  }
+  {
+     int i = 4;
+     shared->A[i - 1] = shared->Pgamma * (shared->ppB / (real_type) (shared->Pgamma - shared->Pepsilon) - shared->ppC / (real_type) (shared->Pgamma - shared->Psigma - shared->Palpha)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma) + shared->Prho * shared->Ptau * (shared->ppH / (real_type) (shared->Pomega + shared->Pdelta - shared->Pgamma)) / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma));
+  }
+  {
+     int i = 5;
+     shared->A[i - 1] = - shared->Prho * shared->Ptau * (shared->ppF / (real_type) ((shared->Prho - shared->Psigma - shared->Palpha) * (shared->Ptau - shared->Psigma - shared->Palpha)) + shared->ppG / (real_type) ((shared->Prho - shared->Pepsilon) * (shared->Ptau - shared->Pepsilon)) + shared->ppH / (real_type) ((shared->Prho - shared->Pgamma) * (shared->Ptau - shared->Pgamma)) + shared->ppJ / (real_type) ((shared->Prho - shared->Pomega - shared->Pdelta) * (shared->Ptau - shared->Pomega - shared->Pdelta)) + shared->ppK / (real_type) (shared->Prho - shared->Ptau)) / (real_type) (shared->Pomega + shared->Pdelta - shared->Prho);
+  }
+  {
+     int i = 6;
+     shared->A[i - 1] = shared->Prho * shared->Ptau * ((shared->ppK / (real_type) (shared->Pomega + shared->Pdelta - shared->Ptau)) / (real_type) (shared->Prho - shared->Ptau));
   }
   for (int i = 1; i <= shared->dim_D_1; ++i) {
     for (int j = 1; j <= shared->dim_D_2; ++j) {

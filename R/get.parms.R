@@ -93,7 +93,7 @@ get.parms <- function(start_year,
     Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for kids TODO check parms for infectiousness
   }
   if(missing(ari0)){ #TODO think about making vector?
-    ari0 <- qlnorm(0.5, log(2), 0.75)
+    ari0 <- qlnorm(0.5, log(2), 0.75)/1e2
   }
 
   ## Set up list to pass to model
