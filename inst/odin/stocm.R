@@ -489,8 +489,6 @@ dim(zk) <- 6
 dim(Tijk) <- c(patch_dims, patch_dims, 6)
 dim(Sij) <- c(patch_dims, patch_dims)
 dim(ellij) <- c(patch_dims, patch_dims)
-dim(elli) <- c(patch_dims)
-dim(Pellij) <- c(patch_dims, patch_dims)
 
 dim(incidence_bypatch) <- patch_dims
 dim(prevalence_bypatch) <- patch_dims
@@ -676,13 +674,18 @@ update(cum_inf_ByPatch[]) <- cum_inf_ByPatch[i] + InfsByPatch[i]
 update(cum_inf_flux[, ]) <- cum_inf_flux[i, j] + InfsByPatchPatch[i, j]
 InfPrev[1:patch_dims] <- (sum(D[i, , ]) + relinf * sum(SC[i, , ])) / (sum(N[i, , ]) + 1e-15)
 update(PrevByPatch[1:patch_dims]) <- InfPrev[i]
+
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
-## NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], ellij[i, j] / (elli[i] + tol))
-## Pellij[, ] <- if (elli[i] > tol && ellij[i, j] > tol) ellij[i, j] / elli[i] else 0
-Pellij[, ] <- foitemp[i, j] / (foi[i] + tol) #TODO BUG
-NotesByPatchPatch[, ] <- rbinom(NotesByPatch[i], Pellij[i, j])
+NotesByPatchPatch[1:patch_dims, 1] <- rbinom(NotesByPatch[i], ellij[i, 1] / (sum(ellij[i,1:patch_dims]) + tol))
+NotesByPatchPatch[1:patch_dims, 2:patch_dims] <- rbinom(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]), ellij[i, j] / (sum(ellij[i, j:patch_dims]) + tol)) #
+
+## NotesByPatchPatch[1:patch_dims, 1] <- rbinom(NotesByPatch[i], foitemp[i, 1] / (foi[i] + tol))
+## NotesByPatchPatch[1:patch_dims, 2:patch_dims] <- rbinom(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]), foitemp[i, j] / (sum(foitemp[i, j:patch_dims]) + tol)) # OK
 ## update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
-update(cum_note_flux[, ]) <- cum_note_flux[i, j] + foitemp[i, j]
+## update(cum_note_flux[, ]) <- cum_note_flux[i, j] + foitemp[i, j]
+## update(cum_note_flux[, ]) <- cum_note_flux[i, j] + ellij[i, j] #OK
+update(cum_note_flux[, ]) <- cum_note_flux[i, j] + NotesByPatchPatch[i, j]
+
 
 ##############################
 ##### 2: Infected early ######
@@ -1272,11 +1275,10 @@ update(beta_test) <- beta_test #constant at initial value passed in
 
 ## =========== flux approximation calculations
 update(Tijk[,,]) <- exp(-zk[k]) * Tijk[i,j,k] + InfsByPatchPatch[i, j]
-update(Sij[, ]) <- exp(-zk[1]) * (Tijk[i, j, 1] + Sij[i,j ])
+update(Sij[, ]) <- exp(-zk[1]) * ( Tijk[i, j, 1] + Sij[i,j ] )
 
 ## \ell_{ij}(t) = \sum_{s=1}^t\Lambda_{ij}(t-s)p(s)
-ellij[, ] <- A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + A[3] * Tijk[i, j, 3] + A[4] * Tijk[i, j, 4] + A[5] * Tijk[i, j, 5] + A[6] * Tijk[i, j, 6]
-elli[] <- sum(ellij[i, ]) #safety
+ellij[, ] <- abs(A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + A[3] * Tijk[i, j, 3] + A[4] * Tijk[i, j, 4] + A[5] * Tijk[i, j, 5] + A[6] * Tijk[i, j, 6])
 
 
 ## parameter mapping CHECK
@@ -1327,8 +1329,3 @@ ppH <- Pdelta * Pgamma * (ppB / (Pgamma - Pepsilon) - ppC / (Pgamma - Psigma - P
 ppJ <- Pdelta * Pgamma * (ppC * (1 / (Pomega + Pdelta - Pgamma) - 1 / (Pomega + Pdelta - Psigma - Palpha)) / (Pgamma - Psigma - Palpha) + ppB * (1 / (Pomega + Pdelta - Pepsilon) - 1 / (Pomega + Pdelta - Pgamma)) / (Pgamma - Pepsilon))
 ppK <- -ppF / (Ptau - Psigma - Palpha) - ppG / (Ptau - Pepsilon) - ppH / (Ptau - Pgamma) - ppJ / (Ptau - Pomega - Pdelta)
 
-
-
-## TODO
-## CHECK normalization of p(t)
-## initial states (& check in document)
