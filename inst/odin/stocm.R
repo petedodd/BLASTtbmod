@@ -21,11 +21,11 @@ agefracs[] <- user()
 ## popinit_byage[1:patch_dims, 2:age_dims] <- rbinom(floor(popinit[i]) - sum(popinit_byage[i, 1:(j - 1)]),agefracs[j]/(sum(agefracs[j:patch_dims])+1e-10)) # NO
 
 popinit_byage[, ] <- floor(popinit[i] * agefracs[j] / (sum(agefracs) + 1e-10)) # division just in case
+## popinit_byage[,] <- rbinom(floor(popinit[i]),agefracs[j]/(sum(agefracs)+1e-10)) #division just in case
 
 ## TB initial state
 ## Initial ratio of TBI to disease states
 initD[, ] <- user() # NOTE now taken as input: note mix of D,SC,Tr,R below
-
 initPrev[,] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2)             #non-LTBI=U
 initLL[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2)             #non-LTBI=U
 initF[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2)             #non-LTBI=U
@@ -59,7 +59,7 @@ tbi_Tr[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
 tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
 
 
-## NOTE total stochastic even given above
+## NOTE total stochastic even given above: uncommented below & commented 3rd block below
 ## init_U[, ] <- rbinom(popinit_byage[i, j], tbi_U[i, j])
 ## init_LR[,] <- rbinom(popinit_byage[i,j],tbi_LR[i,j])
 ## init_LL[,] <- rbinom(popinit_byage[i,j],tbi_LL[i,j])
@@ -149,18 +149,25 @@ cdr_SC <- user() # case detection rate for subclinical disease
 beta <- user()   # beta - effective contact rate
 t_dur <- user(0.5)               # t_dur - Duration of treatment (6 months)
 TBd_rate <- cfr/dur              # TB death rate
-## Detection rates
-dtct_rate[,] <- cdr/(dur*(1-cdr)) + ACFhaz1[i,j]                #symptomatic
-dtct_rate_SC[,] <- cdr_SC / (dur * (1 - cdr_SC)) + ACFhaz0[i,j] #asymptomatic
-dim(dtct_rate) <- c(patch_dims,sim_length)
-dim(dtct_rate_SC) <- c(patch_dims,sim_length)
-
 slfcr_rate <- (1-cfr)/dur        # Selfcure rate
 ## m_in <- user(0.0)               # m_in - Migration rate in
 age_rate[] <-user()
 regress_rate <- user()
 progress_rate <- user()
 
+## === ACF
+## Detection rates
+dtct_rate <- cdr/(dur*(1-cdr))   # Detection rate
+dtct_rate_SC <- cdr_SC / (dur * (1 - cdr_SC))
+## see: https://mrc-ide.github.io/odin.dust/articles/porting.html
+dtct_ratem[] <- if(as.integer(step) >= sim_length) dtct_rate + ACFhaz1[i,sim_length] else dtct_rate + ACFhaz1[i,step+1]  #symptomatic
+dtct_rate_SCm[] <- if(as.integer(step) >= sim_length) dtct_rate_SC + ACFhaz0[i,sim_length] else dtct_rate_SC + ACFhaz0[i,step+1] #asymptomatic
+dim(dtct_ratem) <- c(patch_dims)
+dim(dtct_rate_SCm) <- c(patch_dims)
+ACFhaz0[,] <- user() #asymptomatic
+dim(ACFhaz0) <- c(patch_dims,sim_length)
+ACFhaz1[,] <- user() #symptomatic
+dim(ACFhaz1) <- c(patch_dims,sim_length)
 
 ########################
 # Assigning interpolated inputs
@@ -224,7 +231,7 @@ epsi <- user()
 ## Mixing/infectivity
 ## Mij = contact rate from patch i to patch j
 ## foitemp[1:patch_dims, 1:patch_dims] <- beta_seas * MM[i, j] * InfPrev[j]
-foitemp[1:patch_dims, 1:patch_dims] <- beta_seas * MM[i, j] * (sum(D[j, , ]) + relinf * sum(SC[j, , ])) / (sum(N[j, , ]) + 1e-15)
+foitemp[1:patch_dims, 1:patch_dims] <- beta_seas * MM[i, j] * (sum(D[j, , ]) + relinf * sum(SC[j, , ])) / (sum(N[j, , ]) + 1e-15) #
 ## force of infection on patch i from patch j: contact rate x prev in patch j
 foi[1:patch_dims] <- sum( foitemp[i,] ) #FOI on each patch i: sum over FOIs from each patch
 MM[,] <- user()           # Mixing matrix
@@ -243,12 +250,6 @@ initial(PrevByPatch[]) <- 0
 ## patch trackers
 initial(incidence_bypatch[]) <- 0
 initial(prevalence_bypatch[]) <- 0
-
-## ============ ACF =======
-ACFhaz0[,] <- user() #asymptomatic
-dim(ACFhaz0) <- c(patch_dims,sim_length)
-ACFhaz1[,] <- user() #symptomatic
-dim(ACFhaz1) <- c(patch_dims,sim_length)
 
 
 
@@ -676,7 +677,7 @@ InfPrev[1:patch_dims] <- (sum(D[i, , ]) + relinf * sum(SC[i, , ])) / (sum(N[i, ,
 update(PrevByPatch[1:patch_dims]) <- InfPrev[i]
 
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
-NotesByPatchPatch[1:patch_dims, 1] <- rbinom(NotesByPatch[i], ellij[i, 1] / (sum(ellij[i,1:patch_dims]) + tol))
+NotesByPatchPatch[1:patch_dims, 1] <- rbinom(NotesByPatch[i], ellij[i, 1] / (sum(ellij[i,1:patch_dims]) + tol)) #
 NotesByPatchPatch[1:patch_dims, 2:patch_dims] <- rbinom(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]), ellij[i, j] / (sum(ellij[i, j:patch_dims]) + tol)) #
 
 ## NotesByPatchPatch[1:patch_dims, 1] <- rbinom(NotesByPatch[i], foitemp[i, 1] / (foi[i] + tol))
@@ -886,11 +887,11 @@ HIV_in_SC[,,2:HIV_dims] <- HIV_out_SC[i,j,k-1]
 HIV_in_SC[,,1]<-0
 
 ###### SC DISEASE: EXIT EVENTS #####
-rate_SC[, , 1] <- m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SC[i,step] + slfcr_rate +
+rate_SC[, , 1] <- m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SCm[i] + slfcr_rate +
   progress_rate + age_rate[j] + HIV_rate_yr[j]
-rate_SC[, , 2] <- m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SC[i,step] + slfcr_rate +
+rate_SC[, , 2] <- m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SCm[i] + slfcr_rate +
   progress_rate + age_rate[j] + ART_rate_yr[j]
-rate_SC[, , 3] <- m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SC[i,step] + slfcr_rate +
+rate_SC[, , 3] <- m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SCm[i] + slfcr_rate +
   progress_rate + age_rate[j]
 Nevents_SC[, , ] <- rbinom(SC[i, j, k], 1 - exp(-rate_SC[i, j, k] * dt))
 
@@ -903,13 +904,13 @@ age_out_SC[, , ] <- rbinom(Nevents_SC[i, j, k], p_SCage[i, j, k])
 
 
 ## b) HIV
-p_SCHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+p_SCHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                       slfcr_rate + progress_rate + HIV_rate_yr[j] > tol)
-                    HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+                    HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                                       slfcr_rate + progress_rate + HIV_rate_yr[j]) else 0
-p_SCHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+p_SCHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                       slfcr_rate + progress_rate + ART_rate_yr[j] > tol)
-                    ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+                    ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                                       slfcr_rate + progress_rate + ART_rate_yr[j]) else 0
 p_SCHIV[, , 3] <- 0
 HIV_out_SC[, , ] <- rbinom(Nevents_SC[i, j, k] - age_out_SC[i, j, k], p_SCHIV[i, j, k])
@@ -917,17 +918,17 @@ HIV_out_SC[, , ] <- rbinom(Nevents_SC[i, j, k] - age_out_SC[i, j, k], p_SCHIV[i,
 
 
 ## c) TB DETECTION
-p_detect_SC[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+p_detect_SC[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                           slfcr_rate +progress_rate > tol)
-                        dtct_rate_SC[i,step] /(m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+                        dtct_rate_SCm[i] /(m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                                        slfcr_rate +progress_rate) else 0
-p_detect_SC[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+p_detect_SC[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                           slfcr_rate +progress_rate > tol)
-                        dtct_rate_SC[i,step] /(m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+                        dtct_rate_SCm[i] /(m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate_SCm[i] +
                                        slfcr_rate +progress_rate) else 0
-p_detect_SC[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+p_detect_SC[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SCm[i] +
                           slfcr_rate +progress_rate > tol)
-                        dtct_rate_SC[i,step] / (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SC[i,step] +
+                        dtct_rate_SCm[i] / (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate_SCm[i] +
                                         slfcr_rate +progress_rate) else 0
 detection_SC[, , ] <- rbinom(
   Nevents_SC[i, j, k] - age_out_SC[i, j, k] - HIV_out_SC[i, j, k],
@@ -1018,11 +1019,11 @@ HIV_in_D[,,2:HIV_dims] <- HIV_out_D[i,j,k-1]
 HIV_in_D[,,1]<-0
 
 # ###### ACTIVE DISEASE: EXIT EVENTS #####
-rate_D[,,1] <- m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate +
+rate_D[,,1] <- m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate +
   age_rate[j] + HIV_rate_yr[j]
-rate_D[,,2] <- m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate +
+rate_D[,,2] <- m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate +
   age_rate[j] + ART_rate_yr[j]
-rate_D[, , 3] <- m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate + age_rate[j]
+rate_D[, , 3] <- m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate + age_rate[j]
 Nevents_D[, , ] <- rbinom(D[i, j, k], 1 - exp(-rate_D[i, j, k] * dt))
 
 
@@ -1032,17 +1033,17 @@ age_out_D[, , ] <- rbinom(Nevents_D[i, j, k], p_Dage[i, j, k])
 
 
 ## b) HIV
-p_DHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate + HIV_rate_yr[j] > tol) HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate + HIV_rate_yr[j]) else 0
-p_DHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate + ART_rate_yr[j] > tol) ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate + ART_rate_yr[j]) else 0
+p_DHIV[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate + HIV_rate_yr[j] > tol) HIV_rate_yr[j] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate + HIV_rate_yr[j]) else 0
+p_DHIV[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate + ART_rate_yr[j] > tol) ART_rate_yr[j] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate + ART_rate_yr[j]) else 0
 p_DHIV[, , 3] <- 0
 HIV_out_D[, , ] <- rbinom(Nevents_D[i, j, k] - age_out_D[i, j, k], p_DHIV[i, j, k])
 
 
 
 # ## c) TB DETECTION
-p_detect[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate > tol) dtct_rate[i,step] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate) else 0
-p_detect[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate > tol) dtct_rate[i,step] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate) else 0
-p_detect[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate > tol) dtct_rate[i,step] / (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_rate[i,step] + slfcr_rate + regress_rate) else 0
+p_detect[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate > tol) dtct_ratem[i] / (m_in_t[j] + mu_noHIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate) else 0
+p_detect[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate > tol) dtct_ratem[i] / (m_in_t[j] + mu_HIV_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate) else 0
+p_detect[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate > tol) dtct_ratem[i] / (m_in_t[j] + mu_ART_t[j] + TBd_rate + dtct_ratem[i] + slfcr_rate + regress_rate) else 0
 detection[, , ] <- rbinom(Nevents_D[i, j, k] - age_out_D[i, j, k] - HIV_out_D[i, j, k], p_detect[i, j, k])
 
 
@@ -1284,7 +1285,7 @@ ellij[, ] <- abs(A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + 
 ## parameter mapping CHECK
 ## NOTES -> model
 ## omega  :  1/dur      #tb cessation
-## delta  :  dtct_rate dtct_rate[i,step] #detection rate
+## delta  :  dtct_rate dtct_ratem[i] #detection rate
 ## mu     :  mu_noHIV_int[2:age_dims,1:sim_length] #mortality
 ## sigma  :  pLL #stabilisation
 ## alpha  :  pDf #fast progression
@@ -1293,7 +1294,7 @@ ellij[, ] <- abs(A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + 
 ## rho    :  pDr  #relapse rate
 ## tau    :  1/t_dur    #1/treatment dur
 Pomega  <-  1/dur      #tb cessation
-Pdelta  <-  dtct_rate[1,1]  #detection rate TODO
+Pdelta  <-  dtct_rate  #detection rate TODO
 Pmu     <-  mu_noHIV_int[2,1] #mortality: TODO possible to make mean?
 Psigma  <-  pLL #stabilisation
 Palpha  <-  pDf #fast progression
