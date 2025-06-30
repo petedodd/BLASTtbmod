@@ -13,7 +13,9 @@ run.pmcmc(
   n.burnin,
   n.chains,
   n.threads = 4,
-  n.epochs = 1
+  n.epochs = 1,
+  save_restart = NULL,
+  returnall = FALSE
 )
 }
 \arguments{
@@ -34,9 +36,13 @@ run.pmcmc(
 \item{n.threads}{TODO}
 
 \item{n.epochs}{TODO}
+
+\item{save_restart}{where to save the restart}
+
+\item{returnall}{whether to return a list of things or just processed chains}
 }
 \value{
-mcstate processed chains object
+mcstate processed chains object (unless returnall=TRUE, in which case a list)
 }
 \description{
 This is the main function for performing particle filter inference

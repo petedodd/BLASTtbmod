@@ -34,3 +34,59 @@ run.model <- function(parm,
   }
   y_looped
 }
+
+##' For simulating counterfactuals
+##'
+##' TODO
+##' @title run counterfactuals
+##' @param parm base case parameters
+##' @param cfparm counterfactual parameters
+##' @param times times to run over
+##' @param n.particles number of particles
+##' @param pars_multi TODO
+##' @param convert to dataframe?
+##' @return array or data.frame
+##' @import dust
+##' @export
+##' @author Pete Dodd
+run.CF <- function(parm,
+                   cfparm,
+                   times,
+                   n.particles = 1,
+                   pars_multi=FALSE,
+                   convert = FALSE) {
+  ## create basecase dust model
+  bcmod <- BLASTtbmod:::stocm$new(
+                                pars = parm,
+                                time = min(times) + 1,
+                                n_particles = 1, seed = 1,
+                                deterministic = TRUE,
+                                pars_multi = pars_multi
+                              )
+  ## create counterfactual dust model
+  cfmod <- BLASTtbmod:::stocm$new(
+                                pars = parm,
+                                time = min(times) + 1,
+                                n_particles = 1, seed = 1,
+                                deterministic = TRUE,
+                                pars_multi = pars_multi
+                              )
+  ## simulate
+  ## bcres <- bcmod$simulate(times)
+  ## cfres <- cfmod$simulate(times)
+  ## model loop over time
+  bcres <- cfres <- array(NA, dim = c(bcmod$info()$len, n.particles, max(times)))
+  for (t in 1:max(times)) {
+    bcres[, , t] <- bcmod$run(t)
+    cfres[, , t] <- cfmod$run(t)
+  }
+  if (convert == TRUE) { # convert to df
+    bcres <- as.data.frame(t(bcres[, 1, ])) # TODO cope with multiple parms?
+    cfres <- as.data.frame(t(cfres[, 1, ])) # TODO cope with multiple parms?
+    ## Make it readable
+    if (ncol(bcres) == length(BLASTtbmod::get_cols)) {
+      colnames(bcres) <- colnames(cfres) <- BLASTtbmod::get_cols
+    }
+  }
+  list(bcres,cfres)
+}
