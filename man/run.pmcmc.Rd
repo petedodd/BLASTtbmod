@@ -15,29 +15,32 @@ run.pmcmc(
   n.threads = 4,
   n.epochs = 1,
   save_restart = NULL,
+  transform = NULL,
   returnall = FALSE
 )
 }
 \arguments{
-\item{particle.filter}{TODO}
+\item{particle.filter}{an mcstate particle filter object}
 
-\item{parms}{TODO}
+\item{parms}{base parameters list}
 
-\item{prior.list}{TODO}
+\item{prior.list}{priors for inference parameters}
 
-\item{initial.proposal.matrix}{TODO}
+\item{initial.proposal.matrix}{starting point for PMCMC proposal matric}
 
-\item{n.steps}{TODO}
+\item{n.steps}{number of PMCMC iterations}
 
-\item{n.burnin}{TODO}
+\item{n.burnin}{number of interations to discard}
 
-\item{n.chains}{TODO}
+\item{n.chains}{number of PMCMC chains to run}
 
-\item{n.threads}{TODO}
+\item{n.threads}{number of threads to use (not tested)}
 
-\item{n.epochs}{TODO}
+\item{n.epochs}{number of times to re-run PMCMC updating the proposal matrix based on previous run}
 
 \item{save_restart}{where to save the restart}
+
+\item{transform}{if not supplied will default to transform = function(theta) c(parms, as.list(theta))}
 
 \item{returnall}{whether to return a list of things or just processed chains}
 }

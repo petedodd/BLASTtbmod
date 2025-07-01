@@ -2,16 +2,17 @@
 ##'
 ##' TODO
 ##' @title Run PMCMC inference on particle filter
-##' @param particle.filter TODO
-##' @param parms TODO
-##' @param prior.list TODO
-##' @param initial.proposal.matrix TODO
-##' @param n.steps TODO
-##' @param n.burnin TODO
-##' @param n.chains TODO
-##' @param n.threads TODO
-##' @param n.epochs TODO
+##' @param particle.filter an mcstate particle filter object
+##' @param parms base parameters list
+##' @param prior.list priors for inference parameters
+##' @param initial.proposal.matrix starting point for PMCMC proposal matric
+##' @param n.steps number of PMCMC iterations
+##' @param n.burnin number of interations to discard
+##' @param n.chains number of PMCMC chains to run
+##' @param n.threads number of threads to use (not tested)
+##' @param n.epochs number of times to re-run PMCMC updating the proposal matrix based on previous run
 ##' @param save_restart where to save the restart
+##' @param transform if not supplied will default to transform = function(theta) c(parms, as.list(theta))
 ##' @param returnall whether to return a list of things or just processed chains
 ##' @return mcstate processed chains object (unless returnall=TRUE, in which case a list)
 ##' @author Pete Dodd
@@ -25,7 +26,9 @@ run.pmcmc <- function(particle.filter,
                       n.threads = 4,
                       n.epochs = 1,
                       save_restart=NULL,
+                      transform=NULL,
                       returnall=FALSE) {
+  if(is.null(transform)) transform <- function(theta) c(parms, as.list(theta))
   proposal.matrix <- initial.proposal.matrix
   for(epoch in 1:n.epochs){
     cat("------ starting epoch ", epoch, " / ", n.epochs, " ------\n")
@@ -33,7 +36,7 @@ run.pmcmc <- function(particle.filter,
     mcmc_pars <- mcstate::pmcmc_parameters$new(
                                              prior.list,
                                              proposal.matrix,
-                                             transform = function(theta) c(parms, as.list(theta))
+                                             transform = transform
                                            )
     ## PF control object
     control <- mcstate::pmcmc_control(
