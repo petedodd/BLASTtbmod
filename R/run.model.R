@@ -65,7 +65,7 @@ run.CF <- function(parm,
                               )
   ## create counterfactual dust model
   cfmod <- BLASTtbmod:::stocm$new(
-                                pars = parm,
+                                pars = cfparm,
                                 time = min(times) + 1,
                                 n_particles = 1, seed = 1,
                                 deterministic = TRUE,
