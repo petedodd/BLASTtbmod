@@ -7,8 +7,8 @@
 run.pmcmc(
   particle.filter,
   parms,
-  prior.list,
-  initial.proposal.matrix,
+  prior.list = NULL,
+  initial.proposal.matrix = NULL,
   n.steps,
   n.burnin,
   n.chains,
@@ -16,6 +16,7 @@ run.pmcmc(
   n.epochs = 1,
   save_restart = NULL,
   transform = NULL,
+  mcmc_pars = NULL,
   returnall = FALSE
 )
 }
@@ -41,6 +42,8 @@ run.pmcmc(
 \item{save_restart}{where to save the restart}
 
 \item{transform}{if not supplied will default to transform = function(theta) c(parms, as.list(theta))}
+
+\item{mcmc_pars}{if not supplied, will create from prior.list & initial.proposal.matrix (& optionally transform)}
 
 \item{returnall}{whether to return a list of things or just processed chains}
 }

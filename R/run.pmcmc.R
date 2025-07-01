@@ -13,6 +13,7 @@
 ##' @param n.epochs number of times to re-run PMCMC updating the proposal matrix based on previous run
 ##' @param save_restart where to save the restart
 ##' @param transform if not supplied will default to transform = function(theta) c(parms, as.list(theta))
+##' @param mcmc_pars if not supplied, will create from prior.list & initial.proposal.matrix (& optionally transform)
 ##' @param returnall whether to return a list of things or just processed chains
 ##' @return mcstate processed chains object (unless returnall=TRUE, in which case a list)
 ##' @author Pete Dodd
@@ -20,24 +21,39 @@
 ##' @export
 run.pmcmc <- function(particle.filter,
                       parms,
-                      prior.list,
-                      initial.proposal.matrix,
+                      prior.list=NULL,
+                      initial.proposal.matrix=NULL,
                       n.steps, n.burnin, n.chains,
                       n.threads = 4,
                       n.epochs = 1,
                       save_restart=NULL,
                       transform=NULL,
+                      mcmc_pars=NULL,
                       returnall=FALSE) {
-  if(is.null(transform)) transform <- function(theta) c(parms, as.list(theta))
-  proposal.matrix <- initial.proposal.matrix
+  ## if not using mcmc_pars directly, and missing: create a default transform
+  if(is.null(transform) & is.null(mcmc_pars)) transform <- function(theta) c(parms, as.list(theta))
+  if(is.null(mcmc_pars) & !(is.null(prior.list) & is.null(initial.proposal.matrix) & is.null(transform)) )
+    warning("Since mcmc_pars is supplied, will be ignoring prior.list, initial.proposal.matrix, and transform")
+  if(is.null(mcmc_pars) & is.null(prior.list) & is.null(initial.proposal.matrix) & is.null(transform))
+    stop("Need either mcmc_pars, or both prior.list & initial.proposal.matrix (& optionally transform)!")
+  if(!is.null(initial.proposal.matrix)){
+    proposal.matrix <- initial.proposal.matrix
+  }
+  ## start epoch loop
   for(epoch in 1:n.epochs){
     cat("------ starting epoch ", epoch, " / ", n.epochs, " ------\n")
     ## create PF parameters
-    mcmc_pars <- mcstate::pmcmc_parameters$new(
-                                             prior.list,
-                                             proposal.matrix,
-                                             transform = transform
-                                           )
+    if( !is.null(mcmc_pars) & epoch==1 ){ #extract this triplet from provided mcmc_pars for potential future reference
+      prior.list <- mcmc_pars$.__enclos_env__$private$parameters
+      proposal.matrix <- mcmc_pars$.__enclos_env__$private$proposal_kernel
+      transform <- mcmc_pars$.__enclos_env__$private$transform
+    } else { #create mcmc_pars (or overwrite)
+      mcmc_pars <- mcstate::pmcmc_parameters$new(
+                                               prior.list,
+                                               proposal.matrix,
+                                               transform = transform
+                                             )
+    }
     ## PF control object
     control <- mcstate::pmcmc_control(
                           n_steps = n.steps,
