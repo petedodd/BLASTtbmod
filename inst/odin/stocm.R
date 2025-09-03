@@ -483,7 +483,8 @@ dim( bg_deaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( MM ) <- c( patch_dims, patch_dims )
 dim( foitemp ) <- c( patch_dims, patch_dims )
 dim( foi ) <- patch_dims
-dim( popinit ) <- patch_dims
+dim(popinit) <- patch_dims
+dim(birthparm) <- patch_dims
 dim( IRR ) <- patch_dims
 dim( tt ) <- sim_length
 dim( popinit_byage ) <- c( patch_dims, age_dims )
@@ -505,7 +506,7 @@ dim(tbi_R) <- c( patch_dims, age_dims )
 ## ## patch level aggregate indicators
 ## dim(pnotifrate) <- c(patch_dims)
 ## dim(pnotes) <- c(patch_dims)
-## dim(ppop) <- c(patch_dims)
+dim(ppop) <- c(patch_dims)
 
 ## flux variables
 dim(InfsByPatchPatch) <- c(patch_dims, patch_dims)
@@ -580,8 +581,10 @@ tol <- 1e-10 # a safety: tolerance for denominator size
 ### a) BIRTHS + (net?) MIGRATION
 # Birth rate downloaded from https://population.un.org/wpp/
 
-births[ 1:patch_dims, 1, 1 ]  <- rpois( birth_rate_yr*sum(N[i,,])*dt )
-births[ 1:patch_dims, 2:age_dims, 2:HIV_dims ] <- 0
+mxp <- 1000000 #patch max population
+birthparm[1:patch_dims] <- if (birth_rate_yr * ppop[i] > 0 && ppop[i] < mxp) birth_rate_yr * ppop[i] * dt else 0
+births[1:patch_dims, 1, 1] <- rpois(birthparm[i])
+births[1:patch_dims, 2:age_dims, 2:HIV_dims] <- 0
 ## m_in_U[,,] <- rpois( m_in*U[i,j,k]*dt )
 
 ### b) AGEING
@@ -1222,7 +1225,7 @@ update(prevalence_bypatch[]) <- 1e5 * (sum(D[i, , ]) + 1* sum(SC[i, , ])) / (sum
 
 ## ## patch-level total notifications,popn, and rates
 ## pnotes[] <- sum(detection[i, , ] + detection_SC[i, , ])
-## ppop[] <- sum(N[i, , ])
+ppop[] <- sum(N[i, , ])
 ## pnotifrate[] <- 1e5 * pnotes[i] / (ppop[i] + 1e-10)
 
 ## #########################

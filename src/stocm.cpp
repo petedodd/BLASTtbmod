@@ -231,6 +231,7 @@ public:
     int dim_bg_deaths_12;
     int dim_bg_deaths_2;
     int dim_bg_deaths_3;
+    int dim_birthparm;
     int dim_births;
     int dim_births_1;
     int dim_births_12;
@@ -871,6 +872,7 @@ public:
     int dim_popinit_byage;
     int dim_popinit_byage_1;
     int dim_popinit_byage_2;
+    int dim_ppop;
     int dim_pR_inmigr;
     int dim_pR_inmigr_1;
     int dim_pR_inmigr_12;
@@ -1144,6 +1146,7 @@ public:
     std::vector<real_type> mu_ART_int;
     std::vector<real_type> mu_HIV_int;
     std::vector<real_type> mu_noHIV_int;
+    real_type mxp;
     int offset_variable_bg_deaths;
     int offset_variable_cum_inf_flux;
     int offset_variable_cum_note_flux;
@@ -1227,6 +1230,7 @@ public:
     std::vector<real_type> age_out_Tr;
     std::vector<real_type> age_out_U;
     std::vector<real_type> ART_rate_yr;
+    std::vector<real_type> birthparm;
     std::vector<real_type> births;
     std::vector<real_type> D_inmigr;
     std::vector<real_type> Ddeaths;
@@ -1345,6 +1349,7 @@ public:
     std::vector<real_type> pD_inmigr;
     std::vector<real_type> pLL_inmigr;
     std::vector<real_type> pLR_inmigr;
+    std::vector<real_type> ppop;
     std::vector<real_type> pR_inmigr;
     std::vector<real_type> progFast;
     std::vector<real_type> progress;
@@ -1471,6 +1476,9 @@ public:
     for (int i = 1; i <= shared->dim_NotesByPatch; ++i) {
       internal.NotesByPatch[i - 1] = odin_sum3<real_type>(notes, i - 1, i, 0, shared->dim_notes_2, 0, shared->dim_notes_3, shared->dim_notes_1, shared->dim_notes_12);
     }
+    for (int i = 1; i <= shared->dim_ppop; ++i) {
+      internal.ppop[i - 1] = odin_sum3<real_type>(N, i - 1, i, 0, shared->dim_N_2, 0, shared->dim_N_3, shared->dim_N_1, shared->dim_N_12);
+    }
     for (int i = 1; i <= shared->dim_N_1; ++i) {
       for (int j = 1; j <= shared->dim_N_2; ++j) {
         for (int k = 1; k <= shared->dim_N_3; ++k) {
@@ -1482,16 +1490,7 @@ public:
       state_next[shared->offset_variable_prevalence_bypatch + i - 1] = 100000 * (odin_sum3<real_type>(D, i - 1, i, 0, shared->dim_D_2, 0, shared->dim_D_3, shared->dim_D_1, shared->dim_D_12) + 1 * odin_sum3<real_type>(SC, i - 1, i, 0, shared->dim_SC_2, 0, shared->dim_SC_3, shared->dim_SC_1, shared->dim_SC_12)) / (real_type) (odin_sum3<real_type>(N, i - 1, i, 0, shared->dim_N_2, 0, shared->dim_N_3, shared->dim_N_1, shared->dim_N_12) + static_cast<real_type>(1.0000000000000001e-15));
     }
     for (int i = 1; i <= shared->patch_dims; ++i) {
-      int j = 1;
-      int k = 1;
-      internal.births[i - 1 + shared->dim_births_1 * (j - 1) + shared->dim_births_12 * (k - 1)] = dust::random::poisson<real_type>(rng_state, birth_rate_yr * odin_sum3<real_type>(N, i - 1, i, 0, shared->dim_N_2, 0, shared->dim_N_3, shared->dim_N_1, shared->dim_N_12) * shared->dt);
-    }
-    for (int i = 1; i <= shared->patch_dims; ++i) {
-      for (int j = 2; j <= shared->age_dims; ++j) {
-        for (int k = 2; k <= shared->HIV_dims; ++k) {
-          internal.births[i - 1 + shared->dim_births_1 * (j - 1) + shared->dim_births_12 * (k - 1)] = 0;
-        }
-      }
+      internal.birthparm[i - 1] = (birth_rate_yr * internal.ppop[i - 1] > 0 && internal.ppop[i - 1] < shared->mxp ? birth_rate_yr * internal.ppop[i - 1] * shared->dt : 0);
     }
     for (int i = 1; i <= shared->dim_dtct_rate_SCm; ++i) {
       internal.dtct_rate_SCm[i - 1] = (static_cast<int>(step) >= shared->sim_length ? shared->dtct_rate_SC + shared->ACFhaz0[shared->dim_ACFhaz0_1 * (shared->sim_length - 1) + i - 1] : shared->dtct_rate_SC + shared->ACFhaz0[shared->dim_ACFhaz0_1 * (step + 1 - 1) + i - 1]);
@@ -1906,6 +1905,18 @@ public:
     for (int i = 1; i <= shared->dim_Sij_1; ++i) {
       for (int j = 1; j <= shared->dim_Sij_2; ++j) {
         state_next[shared->offset_variable_Sij + i - 1 + shared->dim_Sij_1 * (j - 1)] = dust::math::exp(- shared->zk[0]) * (Tijk[shared->dim_Tijk_12 * 0 + shared->dim_Tijk_1 * (j - 1) + i - 1] + Sij[shared->dim_Sij_1 * (j - 1) + i - 1]);
+      }
+    }
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      int j = 1;
+      int k = 1;
+      internal.births[i - 1 + shared->dim_births_1 * (j - 1) + shared->dim_births_12 * (k - 1)] = dust::random::poisson<real_type>(rng_state, internal.birthparm[i - 1]);
+    }
+    for (int i = 1; i <= shared->patch_dims; ++i) {
+      for (int j = 2; j <= shared->age_dims; ++j) {
+        for (int k = 2; k <= shared->HIV_dims; ++k) {
+          internal.births[i - 1 + shared->dim_births_1 * (j - 1) + shared->dim_births_12 * (k - 1)] = 0;
+        }
       }
     }
     for (int i = 1; i <= shared->patch_dims; ++i) {
@@ -3448,6 +3459,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_A = 6;
   shared->dim_zk = 6;
   shared->initial_tot_incidence = 0;
+  shared->mxp = 1000000;
   shared->tol = static_cast<real_type>(1e-10);
   shared->A = std::vector<real_type>(shared->dim_A);
   shared->zk = std::vector<real_type>(shared->dim_zk);
@@ -3579,6 +3591,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_bg_deaths_1 = shared->patch_dims;
   shared->dim_bg_deaths_2 = shared->age_dims;
   shared->dim_bg_deaths_3 = shared->HIV_dims;
+  shared->dim_birthparm = shared->patch_dims;
   shared->dim_births_1 = shared->patch_dims;
   shared->dim_births_2 = shared->age_dims;
   shared->dim_births_3 = shared->HIV_dims;
@@ -3965,6 +3978,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_popinit = shared->patch_dims;
   shared->dim_popinit_byage_1 = shared->patch_dims;
   shared->dim_popinit_byage_2 = shared->age_dims;
+  shared->dim_ppop = shared->patch_dims;
   shared->dim_pR_inmigr_1 = shared->patch_dims;
   shared->dim_pR_inmigr_2 = shared->age_dims;
   shared->dim_pR_inmigr_3 = shared->HIV_dims;
@@ -4121,6 +4135,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->agefracs = user_get_array_fixed<real_type, 1>(user, "agefracs", shared->agefracs, {shared->dim_agefracs}, NA_REAL, NA_REAL);
   shared->ageMids = user_get_array_fixed<real_type, 1>(user, "ageMids", shared->ageMids, {shared->dim_ageMids}, NA_REAL, NA_REAL);
   internal.ART_rate_yr = std::vector<real_type>(shared->dim_ART_rate_yr);
+  internal.birthparm = std::vector<real_type>(shared->dim_birthparm);
   internal.dtct_rate_SCm = std::vector<real_type>(shared->dim_dtct_rate_SCm);
   internal.dtct_ratem = std::vector<real_type>(shared->dim_dtct_ratem);
   internal.foi = std::vector<real_type>(shared->dim_foi);
@@ -4136,6 +4151,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.mu_HIV_t = std::vector<real_type>(shared->dim_mu_HIV_t);
   internal.mu_noHIV_t = std::vector<real_type>(shared->dim_mu_noHIV_t);
   internal.NotesByPatch = std::vector<real_type>(shared->dim_NotesByPatch);
+  internal.ppop = std::vector<real_type>(shared->dim_ppop);
   shared->dim_ACFhaz0 = shared->dim_ACFhaz0_1 * shared->dim_ACFhaz0_2;
   shared->dim_ACFhaz1 = shared->dim_ACFhaz1_1 * shared->dim_ACFhaz1_2;
   shared->dim_age_in_D = shared->dim_age_in_D_1 * shared->dim_age_in_D_2 * shared->dim_age_in_D_3;
