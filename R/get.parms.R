@@ -6,6 +6,7 @@
 ##' @param years N years in simulation
 ##' @param Dinit Matrix of initial prevalences
 ##' @param ari0 initial ARIs for initial state
+##' @param hivoffset How many years ahead is Blantyre HIV incidence than MWI?
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -14,7 +15,8 @@
 get.parms <- function(start_year,
                       years,
                       Dinit,
-                      ari0) {
+                      ari0,
+                      hivoffset=5) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -45,8 +47,21 @@ get.parms <- function(start_year,
   age.frax <- age.frax / sum(age.frax)
 
   ## Get correct years for HIV
-  HIV_inc_1990_2021 <- BLASTtbmod::HIV_inc_1990_2021[which(HIV_inc_1990_2021$Year %in% start_year:(start_year + years)), ]
-  HIV_int <- approx(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est, n = sim_length)$y
+  offset <- hivoffset
+  log_hinc <- Hmisc::approxExtrap(
+    x = BLASTtbmod::HIV_inc_1990_2021$Year,
+    y = log(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est),
+    xout = (start_year + offset):(offset + start_year + years),
+    method = "linear",
+    rule = 2
+  )$y
+  hinc <- exp(log_hinc)
+
+  ## interpolate HIV
+  HIV_int <- approx(
+    hinc,
+    n = sim_length
+  )$y
 
   ## Time varying ART initiation - interpolate
   ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
@@ -57,7 +72,10 @@ get.parms <- function(start_year,
 
   ## Background death rates by HIV index
   ## set background death rate for ART same as no HIV
-  tiz <- tz <- seq(from = start_year, to = (start_year + years), by = dt) # Year timepoints
+  tiz <- tz <- seq(
+    from = start_year,
+    to = (start_year + years), by = dt
+  ) # Year timepoints
   tiz <- round(tiz)
   tiz <- as.integer(tiz) - start_year + 1 # which MU row to use
 
@@ -65,32 +83,29 @@ get.parms <- function(start_year,
   ## NOTE: m_in still placeholder
   ## No longer interpolated - takes static value for corresponding year for each timestep
   mu_noHIV_int <- m_in_int <- matrix(data = 0, ncol = sim_length, nrow = age_dims)
+  mu_ART_int <- mu_noHIV_int
+  mu_HIV_int <- mu_noHIV_int
   MU <- BLASTtbmod::MWI$omega[
     Year %in% start_year:(start_year + years),
     list(Year, AgeGrp, mu = omegaT - r)
   ]
-  MU <- as.matrix(dcast(MU, Year ~ AgeGrp, value.var = "mu"))[, -1] # mu per age group per year
+  MU <- as.matrix(
+    dcast(MU, Year ~ AgeGrp, value.var = "mu")
+  )[, -1] # mu per age group per year
   for (i in 1:ncol(mu_noHIV_int)) {
     for (j in 1:ncol(MU)) {
       val <- MU[tiz[i], j]
       mu_noHIV_int[j, i] <- ifelse(val > 0, val, 0) # net death/out
       m_in_int[j, i] <- ifelse(val < 0, -val, 0) # net in-migration
+      mu_HIV_int[j, i] <- ifelse(j > 1, 0.1, 0)
+      mu_ART_int[j, i] <- mu_noHIV_int[j, i]
     }
   }
-
-  ## TODO
-  ## mu_HIV_int <- matrix( data=NA, ncol = sim_length, nrow = age_dims )
-  ## for( i in 1:age_dims ){
-  ##   mu_noHIV_int[i,] <- approx( runif( years, min=0.01, max=0.07 ), n=sim_length )$y
-  ##   mu_HIV_int[i,] <- approx( runif( 30*age_dims, min=0.04, max=0.09 ), n=sim_length )$y
-  ## }
-  mu_ART_int <- mu_noHIV_int
-  mu_HIV_int <- mu_noHIV_int
 
   ## initial state for 'disease'
   if (missing(Dinit)) {
     Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
-    Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for kids TODO check parms for infectiousness
+    Dinit[, 2:age_dims] <- 1e-3
   }
   if (missing(ari0)) { # TODO think about making vector?
     ari0 <- qlnorm(0.5, log(2), 0.75) / 1e2

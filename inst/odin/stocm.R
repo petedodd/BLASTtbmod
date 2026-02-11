@@ -178,7 +178,7 @@ HIV_int[] <- user()
 HIV_t <- if(as.integer(step) < sim_length )
   HIV_int[step+1] else HIV_int[sim_length]
 HIV_rate_yr[1] <- 0
-HIV_rate_yr[2] <- HIV_t/1000
+HIV_rate_yr[2] <- HIV_t / 1000
 HIV_rate_yr[3] <- 0
 
 # Assign ART initiation rate

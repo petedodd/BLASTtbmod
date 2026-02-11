@@ -4,7 +4,7 @@
 \alias{get.parms}
 \title{Create parameter object}
 \usage{
-get.parms(start_year, years, Dinit, ari0)
+get.parms(start_year, years, Dinit, ari0, hivoffset = 5)
 }
 \arguments{
 \item{start_year}{Earliest year of simulation}
@@ -14,6 +14,8 @@ get.parms(start_year, years, Dinit, ari0)
 \item{Dinit}{Matrix of initial prevalences}
 
 \item{ari0}{initial ARIs for initial state}
+
+\item{hivoffset}{How many years ahead is Blantyre HIV incidence than MWI?}
 }
 \value{
 list
