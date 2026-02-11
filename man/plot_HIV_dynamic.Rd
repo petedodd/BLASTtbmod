@@ -9,7 +9,9 @@ plot_HIV_dynamic(
   start_year,
   chain_step_num = 1,
   out_type = "N",
-  by_age = FALSE
+  by_age = FALSE,
+  by_patch = TRUE,
+  show_ART = TRUE
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ plot_HIV_dynamic(
 \item{out_type}{output type}
 
 \item{by_age}{by age or not}
+
+\item{by_patch}{split plot by patch}
+
+\item{show_ART}{include/exclude ART coverage}
 }
 \value{
 ggplot
@@ -30,7 +36,8 @@ ggplot
 HIV/ART over time
 }
 \details{
-TODO
+Plotting of HIV/ART over time in various ways.
+If `by_age = FALSE` then age 15-49 years subpopulation will be used.
 }
 \author{
 Pete Dodd

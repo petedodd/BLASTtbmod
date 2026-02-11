@@ -171,14 +171,12 @@ plot_compare_demog <- function(Y,
 ## library(ggh4x)
 
 
-
-
 # Separate function to deal with aggregating rates
 # Defaults to providing notifrates over patches only
 # Currently will only do patch in line with current real data
 # Looks like real data has hiv/art/age available too, so can do this later?
 # Data md7 must be in env
-#' 
+#'
 #' @title Plot average notification rates & compare with real data
 #' @param Y input data
 #' @param n_chain_steps chain steps
@@ -191,47 +189,52 @@ plot_compare_demog <- function(Y,
 #' @importFrom dplyr group_by summarise across all_of
 #' @importFrom magrittr %>%
 #' @export
-plot_compare_noterate_agrgt <- function( Y,
-                                         n_chain_steps = 100,
-                                        agrgt_by = c( 'patch' ),
-                                        realdata=TRUE,
-                                        start_year = 2015){
+plot_compare_noterate_agrgt <- function(Y,
+                                        n_chain_steps = 100,
+                                        agrgt_by = c("patch"),
+                                        realdata = TRUE,
+                                        start_year = 2015) {
+  D1 <- extract.pops.multi(Y, n_chain_steps, out_type = "N")
+  D1[, "subcomp" := NULL]
+  D2 <- extract.pops.multi(Y, n_chain_steps, out_type = "notes")
+  D2[, "subcomp" := NULL]
+  D <- merge(D1, D2, by = c("chain_step", "t", "patch", "age", "hiv"))
 
-  D1 <- extract.pops.multi( Y, n_chain_steps, out_type='N' )
-  D1[,'subcomp' := NULL ]
-  D2 <- extract.pops.multi( Y, n_chain_steps, out_type='notes' )
-  D2[,'subcomp' := NULL]
-  D <- merge( D1, D2, by = c( 'chain_step', 't', 'patch', 'age', 'hiv'))
-
-  agrgt_by <- c( agrgt_by, 'chain_step', 't' )
+  agrgt_by <- c(agrgt_by, "chain_step", "t")
   aggD <- D %>%
-    dplyr::group_by( dplyr::across( dplyr::all_of(agrgt_by))) %>%
-    dplyr::summarise( tot_N = sum(N),
-               tot_notes = sum(notes)) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(agrgt_by))) %>%
+    dplyr::summarise(
+      tot_N = sum(N),
+      tot_notes = sum(notes)
+    ) %>%
     data.table::as.data.table()
-  aggD[, noterate := tot_notes/tot_N*1e5 ]
+  aggD[, noterate := tot_notes / tot_N * 1e5]
 
   # Generate ribbon
   eps = 0.25
-  aggD <- aggD[ ,.( mid=median( noterate ),
-               lo = quantile( noterate, eps ),
-               hi = quantile( noterate, 1-eps )),
-            by=.(t, patch )]
-  aggD <- aggD[t>1]
+  aggD <- aggD[, .(
+    mid = median(noterate),
+    lo = quantile(noterate, eps),
+    hi = quantile(noterate, 1 - eps)
+  ),
+  by = .(t, patch)
+  ]
+  aggD <- aggD[t > 1]
   real_dat = BLASTtbmod::md7
-  real_dat[[ 'patch' ]] <- paste( 'Patch', md7$comid )
+  real_dat[["patch"]] <- paste("Patch", md7$comid)
 
-  p <- ggplot2::ggplot( aggD, aes( t/12+start_year, y = mid, ymin = lo, ymax = hi)) +
+  p <- ggplot2::ggplot(aggD, aes(t / 12 + start_year, y = mid, ymin = lo, ymax = hi)) +
     ggplot2::geom_ribbon(alpha = 0.3) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~patch) +
     ggplot2::ylab("Notification rate per month") +
     ggplot2::xlab("Month") +
-    ggplot2::ggtitle("Real data, median + 50% PI")+
-    ggplot2::theme_light()+
-    ggplot2::expand_limits(y=c(0,NA))
-  if(realdata)
+    ggplot2::ggtitle("Real data, median + 50% PI") +
+    ggplot2::theme_light() +
+    ggplot2::expand_limits(y = c(0, NA))
+  if (realdata) {
     p <- p + ggplot2::geom_point(data = real_dat, col = 2, shape = 1)
+  }
   print(p)
 }
 
@@ -253,191 +256,152 @@ plot_compare_noterate_agrgt <- function( Y,
 #' @importFrom magrittr %>%
 #' @return ggplot2
 #' @export
-plot_pops_dynamic <- function( Y, 
-                               chain_step_num=1, 
-                               out_type='N',
-                               start_year=2015,
-                               by_comp=NULL ){
-
-  D <- extract.pops( Y, chain_step_num, out_type )
-  grp_vars <- c( 'step', by_comp )
+plot_pops_dynamic <- function(Y,
+                              chain_step_num = 1,
+                              out_type = "N",
+                              start_year = 2015,
+                              by_comp = NULL) {
+  D <- extract.pops(Y, chain_step_num, out_type)
+  grp_vars <- c("step", by_comp)
   Dplot <- D %>%
-    dplyr::group_by( dplyr::across( dplyr::all_of( grp_vars ))) %>%
-    dplyr::summarise( tot_pop = sum(value))
+    dplyr::group_by(dplyr::across(dplyr::all_of(grp_vars))) %>%
+    dplyr::summarise(tot_pop = sum(value))
   Dplot$default_col <- 1
   dt <- 1 / 12
 
-  if( 'age' %in% by_comp ){
-    by_comp <- by_comp[-which(by_comp=='age')]
+  if ("age" %in% by_comp) {
+    by_comp <- by_comp[-which(by_comp == "age")]
     col_age <- T
   } else {
     col_age <- F
   }
   out_lab <- out_type # default
-  if( out_type == 'N' ){
-    out_lab <- 'Total population'
+  if (out_type == "N") {
+    out_lab <- "Total population"
   } else {
-    if( out_type == 'incidence'){
-      out_lab <- 'Incidence'
+    if (out_type == "incidence") {
+      out_lab <- "Incidence"
     } else {
-      if( out_type == 'notifrate'){
-        out_lab <- 'Notification rate'
+      if (out_type == "notifrate") {
+        out_lab <- "Notification rate"
       }
     }
   }
-  p <- ggplot2::ggplot( Dplot, aes( x=step*dt+start_year, y = tot_pop )) +
-    ggplot2::xlab( 'Step' )+
-    ggplot2::ylab( out_lab )+
-    ggplot2::scale_y_continuous(label=comma)+
-    ggplot2::guides(color = guide_legend(title = "Age group"))+
+  p <- ggplot2::ggplot(Dplot, aes(x = step * dt + start_year, y = tot_pop)) +
+    ggplot2::xlab("Step") +
+    ggplot2::ylab(out_lab) +
+    ggplot2::scale_y_continuous(label = comma) +
+    ggplot2::guides(color = guide_legend(title = "Age group")) +
     ggplot2::theme_light()
-  if( col_age ){
-    p <- p + ggplot2::geom_line( aes( colour = age ))
-  }else{
+  if (col_age) {
+    p <- p + ggplot2::geom_line(aes(colour = age))
+  } else {
     p <- p + ggplot2::geom_line()
   }
-  if( length( by_comp > 0)){
-    p <- p + ggh4x::facet_grid2( by_comp,
-                                   independent = TRUE,
-                                   scales='free')
+  if (length(by_comp > 0)) {
+    p <- p + ggh4x::facet_grid2(by_comp,
+      independent = TRUE,
+      scales = "free"
+    )
   }
   print(p)
 }
 
 
-## ## demographic snapshot (bar)
-## demo.snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL ){
-##   D <- extract.pops( Y, chain_step_num, out_type )
-##   if( length(timestep > 0)){
-##     p <- ggplot( D[ step==timestep, ], aes(age,value))
-##   } else {
-##     p <- ggplot( D, aes( age, value))
-##   }
-##   out_lab <- out_type # default
-##   if( out_type == 'N' ){
-##     out_lab <- 'Total population'
-##   } else {
-##     if( out_type == 'incidence'){
-##       out_lab <- 'Incidence'
-##     } else {
-##       if( out_type == 'notifrate'){
-##         out_lab <- 'Notification rate'
-##       }
-##     }
-##   }
-
-##   p <- p + geom_bar(stat='identity')+
-##     facet_wrap(~patch)+
-##     scale_y_continuous(label=comma)+
-##     theme_light()+
-##     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
-##     xlab('Age')+
-##     ylab(out_lab)
-##   print(p)
-## }
-
-
 ##' HIV/ART over time
 ##'
-##' TODO
+##' Plotting of HIV/ART over time in various ways.
+##' If `by_age = FALSE` then age 15-49 years subpopulation will be used.
+##'
 ##' @title HIV by time
 ##' @param Y input data
 ##' @param start_year start year
 ##' @param chain_step_num chain step
 ##' @param out_type output type
 ##' @param by_age by age or not
+##' @param by_patch split plot by patch
+##' @param show_ART include/exclude ART coverage
 ##' @return ggplot
 ##' @author Pete Dodd
 ##' @import ggplot2
 ##' @import scales
 ##' @import data.table
 ##' @export
-plot_HIV_dynamic <- function( Y, start_year, chain_step_num=1, out_type='N', by_age = FALSE){
-  ## TODO total population
-  D <- extract.pops( Y, chain_step_num, out_type )
-  dt <- 1/12 #monthly
+plot_HIV_dynamic <- function(Y,
+                             start_year,
+                             chain_step_num = 1,
+                             out_type = "N",
+                             by_age = FALSE,
+                             by_patch = TRUE,
+                             show_ART = TRUE) {
+  D <- extract.pops(Y, chain_step_num, out_type)
+  dt <- 1 / 12 # monthly
   ## reformat
-  if( by_age == FALSE ){
-    X <- data.table::dcast( D,patch+step ~ hiv, fun.aggregate = sum )
-    vars <- c("HIVpc", "ARTpc", "patch", "step")
-    id <- c("patch", "step")
+  if (by_age == FALSE) {
+    D <- D[age == "15-49"] # restrict to conventional HIV age group
+    if (by_patch == TRUE) {
+      X <- data.table::dcast(D, patch + step ~ hiv, fun.aggregate = sum)
+      vars <- c("HIVpc", "ARTpc", "patch", "step")
+      id <- c("patch", "step")
+    } else {
+      X <- data.table::dcast(D, step ~ hiv, fun.aggregate = sum)
+      vars <- c("HIVpc", "ARTpc", "step")
+      id <- c("step")
+    }
   } else {
-    if( by_age == TRUE ){
+    if (by_age == TRUE) {
       X <- data.table::dcast(D, patch + step + age ~ hiv, fun.aggregate = sum)
       id <- c("patch", "step", "age")
       vars <- c("HIVpc", "ARTpc", "patch", "step", "age")
-    } else { stop('by_age must be TRUE or FALSE') }
+    } else {
+      stop("by_age must be TRUE or FALSE")
+    }
   }
-  X[,tot:= `HIV-`+`HIV+/ART-`+`HIV+/ART+`]
-  X[,HIVpc:=(`HIV+/ART-`+`HIV+/ART+`)/tot]
-  X[,ARTpc:=`HIV+/ART+`/(`HIV+/ART-`+`HIV+/ART+` + 1e-10)]
-  X <- data.table::melt(X[,..vars],id=id)
+  X[, tot := `HIV-` + `HIV+/ART-` + `HIV+/ART+`]
+  X[, HIVpc := (`HIV+/ART-` + `HIV+/ART+`) / tot]
+  X[, ARTpc := `HIV+/ART+` / (`HIV+/ART-` + `HIV+/ART+` + 1e-10)]
+  if (show_ART == FALSE) {
+    X[, ARTpc := NA_real_]
+  }
+  X <- data.table::melt(X[, ..vars], id = id)
   out_lab <- out_type # default
-  if( out_type == 'N' ){
+  if (out_type == "N") {
     out_lab <- "Population"
   } else {
-    if( out_type == 'incidence'){
+    if (out_type == "incidence") {
       out_lab <- "Incidence"
     } else {
-      if(out_type == "notifrate" ){
+      if (out_type == "notifrate") {
         out_lab <- "Notification rate"
       }
     }
   }
   ## plot
-  wrap_vars <- id[-which(id=='step')]
-  ggplot2::ggplot(X, aes(step*dt+start_year, value, col=variable))+
-    ggplot2::geom_line()+
-    ggplot2::facet_grid(wrap_vars)+
-    ggplot2::scale_y_continuous(label=scales::percent)+
-    ggplot2::theme_linedraw()+
-    ggplot2::xlab('Year')+
-    ggplot2::ylab( paste( out_lab, '(Proportion)'))+
-    ggplot2::theme(legend.position = 'top',
-          legend.title=element_blank())+
+  GP <- ggplot2::ggplot(X, aes(step * dt + start_year, value, col = variable)) +
+    ggplot2::geom_line() +
+    ggplot2::scale_y_continuous(label = scales::percent) +
+    ggplot2::theme_linedraw() +
+    ggplot2::xlab("Year") +
+    ggplot2::ylab(paste(out_lab, "(proportion)")) +
+    ggplot2::theme(
+      legend.position = "top",
+      legend.title = element_blank()
+    ) +
     ggplot2::scale_color_discrete(labels = c("HIV+/ART-", "HIV+/ART+"))
-}
-
-
-
-##' HIV snapshot by age at single time
-##'
-##' TODO
-##' @title HIV snapshot
-##' @param Y input data
-##' @param chain_step_num chain step
-##' @param out_type output type
-##' @param timestep timestep for snapshot
-##' @return ggplot
-##' @author Pete Dodd
-##' @export
-##' @import ggplot2
-##' @import data.table
-##' @import scales
-plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL ){
-  ## TODO improve what this actually plots
-  D <- extract.pops( Y, chain_step_num, out_type )
-  ## reformat
-  if( length( timestep > 0)){
-    X <- data.table::dcast( D[ step==timestep, ], patch+age ~ hiv, fun.aggregate = sum)
-  } else {
-    X <- data.table::dcast(D, patch + age ~ hiv, fun.aggregate = sum)
+  if (by_patch == TRUE) {
+    wrap_vars <- id[-which(id == "step")]
+    GP <- GP + ggplot2::facet_wrap(wrap_vars)
   }
-  X <- data.table::melt(X, id = c("patch", "age"))
-  ## plot
-  ggplot2::ggplot(X, aes( age, value, fill=variable))+
-    ggplot2::geom_bar(stat='identity',position = position_fill())+
-    ggplot2::facet_wrap(~patch)+
-    ggplot2::scale_y_continuous(label=scales::percent)+
-    ggplot2::theme_linedraw()+
-    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.position = 'top',legend.title=element_blank())+
-    ggplot2::xlab("Age") + ggplot2::ylab("Population")
+  if (show_ART == FALSE) {
+    GP <- GP + ggplot2::theme(legend.position = "none")
+  }
+  GP
 }
+
 
 
 ## TB incidence by time
-#' @title Plot sample TB incidence 
+#' @title Plot sample TB incidence
 #' @param Y input data
 #' @param chain_step_num chain step number
 #' @param out_type output type
@@ -451,13 +415,12 @@ plot_HIV_snapshot <- function( Y, chain_step_num=1, out_type='N', timestep=NULL 
 #' @importFrom ggh4x facet_grid2
 #' @importFrom ggh4x facet_wrap2
 #' @export
-plot_TB_dynamics <- function( Y, chain_step_num=1,
-                             out_type='incidence', separate=FALSE,
-                             by_age=FALSE, by_HIV=FALSE, wrap=TRUE,
-                             start_year=2015){
-
+plot_TB_dynamics <- function(Y, chain_step_num = 1,
+                             out_type = "incidence", separate = FALSE,
+                             by_age = FALSE, by_HIV = FALSE, wrap = TRUE,
+                             start_year = 2015) {
   ## extract relevant data
-  D <- extract.pops( Y, chain_step_num, out_type )
+  D <- extract.pops(Y, chain_step_num, out_type)
 
   ## ## version with multi
   ## D <- extract.pops.multi( Y, dim(Y)[2], out_type )
@@ -471,62 +434,65 @@ plot_TB_dynamics <- function( Y, chain_step_num=1,
   ##        by=.(t, patch )]
   ## TODO this will need adaptation of plotting code below (see noterate for eg)
 
-  by_comp <- 'patch'
-  dt <- 1/12
-  D <- D[step>1]
-  D[,yr:=step*dt+start_year]
+  by_comp <- "patch"
+  dt <- 1 / 12
+  D <- D[step > 1]
+  D[, yr := step * dt + start_year]
 
-  if( separate==FALSE ){
-    if(by_HIV){
-      D[,hiv:=ifelse(hiv=='HIV-','HIV-','HIV+')]
-      D <- D[,.(value=sum(value)),by=.(yr,patch,age,hiv)]
+  if (separate == FALSE) {
+    if (by_HIV) {
+      D[, hiv := ifelse(hiv == "HIV-", "HIV-", "HIV+")]
+      D <- D[, .(value = sum(value)), by = .(yr, patch, age, hiv)]
     } else {
-      D <- D[,.(value=sum(value)),by=.(yr,patch,age)]
+      D <- D[, .(value = sum(value)), by = .(yr, patch, age)]
     }
   }
-  if( by_age==FALSE ){
-    if(by_HIV){
-      D <- D[,.(value=sum(value)),by=.(yr,patch,hiv)]
-    } else{
-      D <- D[,.(value=sum(value)),by=.(yr,patch)]
+  if (by_age == FALSE) {
+    if (by_HIV) {
+      D <- D[, .(value = sum(value)), by = .(yr, patch, hiv)]
+    } else {
+      D <- D[, .(value = sum(value)), by = .(yr, patch)]
     }
   } else {
-    by_comp <- c( by_comp, 'age' )
+    by_comp <- c(by_comp, "age")
   }
 
-  if(by_HIV){
-    plt <- ggplot2::ggplot(D, aes(yr, value, col=hiv))
+  if (by_HIV) {
+    plt <- ggplot2::ggplot(D, aes(yr, value, col = hiv))
   } else {
     plt <- ggplot2::ggplot(D, aes(yr, value))
   }
-  plt <- plt+
-    ggplot2::geom_line()+
-    ggplot2::theme_light()+
-    ggplot2::xlab('Year')+
-    ggplot2::ylab(out_type)+
-    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-    ggplot2::expand_limits(y=c(0,NA))
-  if(wrap){
-    plt <- plt +  ggh4x::facet_wrap2( by_comp,
-                                     scales='free')
-  } else{
-    plt <- plt + ggh4x::facet_grid2( by_comp,
-                                    independent = TRUE,
-                                    scales='free')
+  plt <- plt +
+    ggplot2::geom_line() +
+    ggplot2::theme_light() +
+    ggplot2::xlab("Year") +
+    ggplot2::ylab(out_type) +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggplot2::expand_limits(y = c(0, NA))
+  if (wrap) {
+    plt <- plt + ggh4x::facet_wrap2(by_comp,
+      scales = "free"
+    )
+  } else {
+    plt <- plt + ggh4x::facet_grid2(by_comp,
+      independent = TRUE,
+      scales = "free"
+    )
   }
   plt
+  e
 }
 
 
 
 ## Note - this may need to be made more flexible to align with
-## different start-years for real-data comparison 
+## different start-years for real-data comparison
 ## Plots HIV prevalence among TB notes -
 ## Choose % or per 100,000
 ## Choose to separate HIV into ART+/- or not
 ## Currently works for single particle/chain step.... add variation over chain??
 #' @title Plot HIV prevalence among TB notifications#'
-#' @param Y input data 
+#' @param Y input data
 #' @param chain_step_num chain step
 #' @param separate separate HIV by ART status
 #' @importFrom dplyr filter group_by summarise ungroup
@@ -534,101 +500,91 @@ plot_TB_dynamics <- function( Y, chain_step_num=1,
 #' @importFrom plyr mapvalues
 #' @importFrom ggh4x facet_grid2
 #' @return ggplot2
-#' @export 
-HIV_prev_TB <- function( Y, n_chain_steps = 100, separate=FALSE ){
-  
-  D <- extract.pops.multi( Y, n_chain_steps, out_type='notes' )
+#' @export
+HIV_prev_TB <- function(Y, n_chain_steps = 100, separate = FALSE) {
+  D <- extract.pops.multi(Y, n_chain_steps, out_type = "notes")
   real_dat <- BLASTtbmod::TB_notes_HIV_patch
 
-  if( separate == FALSE ){
-    aggD$hiv <- plyr::mapvalues( aggD$hiv, 
-                                 from = c( 'HIV+/ART-', 'HIV+/ART+'),
-                                 to = c( 'HIV+', 'HIV+'))
-    real_dat$hiv <- plyr::mapvalues( real_dat$hiv, 
-                                     from = c( 'HIV+/ART-', 'HIV+/ART+'),
-                                     to = c( 'HIV+', 'HIV+'))
+  if (separate == FALSE) {
+    aggD$hiv <- plyr::mapvalues(aggD$hiv,
+      from = c("HIV+/ART-", "HIV+/ART+"),
+      to = c("HIV+", "HIV+")
+    )
+    real_dat$hiv <- plyr::mapvalues(real_dat$hiv,
+      from = c("HIV+/ART-", "HIV+/ART+"),
+      to = c("HIV+", "HIV+")
+    )
     replen <- 2
   } else {
     replen <- 3
   }
-  
+
   # Aggregate over appropriate compartments
   aggD <- D %>%
-    dplyr::group_by( patch, hiv, chain_step ) %>%
-    dplyr::summarise( tot_notes = sum(notes)) %>%
+    dplyr::group_by(patch, hiv, chain_step) %>%
+    dplyr::summarise(tot_notes = sum(notes)) %>%
     data.table::as.data.table()
-  
+
   # Calculate prevalence
   D_notes <- aggD %>%
-    dplyr::group_by( patch, chain_step ) %>%
-    dplyr::summarise( grandtot = sum( tot_notes, na.rm=T ))
-  D_out <- merge( aggD, D_notes, by=c( 'patch', 'chain_step' ), all.x = T )
-  D_out$prev_pc <- D_out$tot_notes/D_out$grandtot*100
+    dplyr::group_by(patch, chain_step) %>%
+    dplyr::summarise(grandtot = sum(tot_notes, na.rm = T))
+  D_out <- merge(aggD, D_notes, by = c("patch", "chain_step"), all.x = T)
+  D_out$prev_pc <- D_out$tot_notes / D_out$grandtot * 100
 
   # Generate ribbon
   eps = 0.25
-  D_out <- D_out[ ,.( midpc=median( prev_pc ),
-                    lopc = quantile( prev_pc, eps ),
-                    hipc = quantile( prev_pc, 1-eps )),
-                by=.( hiv, patch ) ]
-  
+  D_out <- D_out[, .(
+    midpc = median(prev_pc),
+    lopc = quantile(prev_pc, eps),
+    hipc = quantile(prev_pc, 1 - eps)
+  ),
+  by = .(hiv, patch)
+  ]
+
   # Wrangle real data
   real_out <- real_dat %>%
-    dplyr::filter( total > 0 ) %>%
-    dplyr::group_by( patch, hiv ) %>%
-    dplyr::summarise( tot = sum(total)) %>%
+    dplyr::filter(total > 0) %>%
+    dplyr::group_by(patch, hiv) %>%
+    dplyr::summarise(tot = sum(total)) %>%
     dplyr::ungroup() %>%
-    tidyr::complete(patch, hiv, fill=list(sum_quantity=0))
+    tidyr::complete(patch, hiv, fill = list(sum_quantity = 0))
   real_notes <- real_out %>%
-    dplyr::group_by( patch ) %>%
-    dplyr::summarise( grandtot = sum( tot, na.rm=T ))
-  real_out <- merge( real_out, real_notes, by='patch', all.x = T )
-  real_out$prev_pc_real <- real_out$tot/real_out$grandtot*100
+    dplyr::group_by(patch) %>%
+    dplyr::summarise(grandtot = sum(tot, na.rm = T))
+  real_out <- merge(real_out, real_notes, by = "patch", all.x = T)
+  real_out$prev_pc_real <- real_out$tot / real_out$grandtot * 100
 
-  D_out <- merge( D_out, real_out[ , c( 'patch', 'hiv', 'prev_pc_real')],
-                  by=c( 'patch', 'hiv'), )
-  D_out$patch <- substr( D_out$patch, 7,7 )
-  D_out$pad_hi <- sapply( 1:nrow( D_out ), function(x) min( D_out$hipc[x] + 5,
-                                                            D_out$prev_pc_real + 5, 100 ))
-  D_out$pad_lo <- sapply( 1:nrow( D_out ), function(x) max( D_out$lopc[x] - 5,
-                                                            D_out$prev_pc_real - 5, 0 ))
-  
-  
-  p <- ggplot2::ggplot( D_out, aes( x=patch, y = midpc )) +
+  D_out <- merge(D_out, real_out[, c("patch", "hiv", "prev_pc_real")],
+    by = c("patch", "hiv"),
+  )
+  D_out$patch <- substr(D_out$patch, 7, 7)
+  D_out$pad_hi <- sapply(1:nrow(D_out), function(x) {
+    min(
+      D_out$hipc[x] + 5,
+      D_out$prev_pc_real + 5, 100
+    )
+  })
+  D_out$pad_lo <- sapply(1:nrow(D_out), function(x) {
+    max(
+      D_out$lopc[x] - 5,
+      D_out$prev_pc_real - 5, 0
+    )
+  })
+
+
+  p <- ggplot2::ggplot(D_out, aes(x = patch, y = midpc)) +
     ggplot2::geom_point() +
-    ggplot2::geom_errorbar( aes(ymin = lopc, ymax = hipc), width=0.4 ) +
-    ggplot2::geom_blank( aes( x=patch, y=pad_lo ))+
-    ggplot2::geom_blank( aes( x=patch, y=pad_hi ))+
-    ggh4x::facet_grid2( ~hiv, 
-                        independent = T,
-                        scales = 'free') +
-    ggplot2::geom_point( aes( y = prev_pc_real ), col = 2, shape = 16 ) +
-    ggplot2::ylab( "HIV status among TB notifications (%)" ) +
+    ggplot2::geom_errorbar(aes(ymin = lopc, ymax = hipc), width = 0.4) +
+    ggplot2::geom_blank(aes(x = patch, y = pad_lo)) +
+    ggplot2::geom_blank(aes(x = patch, y = pad_hi)) +
+    ggh4x::facet_grid2(~hiv,
+      independent = T,
+      scales = "free"
+    ) +
+    ggplot2::geom_point(aes(y = prev_pc_real), col = 2, shape = 16) +
+    ggplot2::ylab("HIV status among TB notifications (%)") +
     ggplot2::xlab("Patch") +
     ggplot2::ggtitle("Real data (red), median + 50% PI simulated (black)")
   print(p)
 }
-
-
-
-# # To take either pmcmc_run$trajectories$state object or forecast$state object or filter.stocmmodr$history()
-# # requires TBN to be in env
-# #  To complete if patch-specific real N available
-# plot.compare.dynamic <- function( Y, n_chain_steps = 100, out_type = 'N' ){
-#   
-#   D <- extract.pops.multi( Y, n_chain_steps, out_type )
-#   D[ ,'subcomp':= NULL ]
-#   
-#   if( out_type == 'N'){
-#     real_dat = TBN
-#     real_dat[[ 't' ]] <- real_dat$month
-#     real_dat[[ 'patch' ]] <- real_dat$zone
-#   }
-#   
-#   agrgt_by <- c( 'chain_step', 't', 'patch' )
-#   aggD <- D %>% 
-#     group_by(across(all_of(agrgt_by))) %>%
-#     summarise( tot_N = sum(N)) %>%
-#     as.data.table()
-#   
-# }
