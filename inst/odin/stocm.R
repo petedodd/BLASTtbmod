@@ -85,36 +85,30 @@ init_SC[,] <- round(popinit_byage[i,j] * tbi_SC[i,j])
 init_Tr[,] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
 init_R[,] <- round(popinit_byage[i,j] * tbi_R[i,j])
 
+## initial proportions by HIV
+dim(propinit_hiv) <- c(patch_dims, age_dims, HIV_dims)
+propinit_hiv[, , ] <- user()
 
-## TODO this will need changing to account for HIV split:
-## less burnin than plannedw
 
-initial(U[,,1]) <- init_U[i,j]
-initial(U[,,2:3]) <- 0
-initial(LR[,,1]) <- init_LR[i,j]
-initial(LR[,,2:3]) <- 0
-initial(LL[,,1]) <- init_LL[i,j]
-initial(LL[,,2:3]) <- 0
+initial(U[, , ]) <- floor(init_U[i, j] * propinit_hiv[i, j, k])
+initial(LR[, , ]) <- floor(init_LR[i, j] * propinit_hiv[i, j, k])
+initial(LL[, , ]) <- floor(init_LL[i, j] * propinit_hiv[i, j, k])
 
 # # For now: Split initial population 80:20 clinical:subclinical
-initial(D[,,1]) <- init_D[i,j]
-initial(D[,,2:3]) <- 0
-initial(SC[,,1]) <- init_SC[i,j]
-initial(SC[,,2:3]) <- 0
+initial(D[, , ]) <- floor(init_D[i, j] * propinit_hiv[i, j, k])
+initial(SC[, , ]) <- floor(init_SC[i, j] * propinit_hiv[i, j, k])
 
-initial(Tr[,,1]) <- init_Tr[i,j]
-initial(Tr[,,2:3]) <- 0
-initial(R[,,1]) <- init_R[i,j]
-initial(R[,,2:3]) <- 0
+initial(Tr[, , ]) <- floor(init_Tr[i, j] * propinit_hiv[i, j, k])
+initial(R[, , ]) <- floor(init_R[i, j] * propinit_hiv[i, j, k])
+
 
 
 ########################################
 # Initial conditions for vars that were previously output,
 # now update for compatibility with odin.dust
 
-initial(N[,,1]) <- init_U[i,j] + init_LR[i,j] + init_LL[i,j] +
-  init_D[i,j] + init_SC[i,j] + init_Tr[i,j] + init_R[i,j]
-initial(N[,,2:3]) <- 0
+initial(N[,,]) <- floor((init_U[i,j] + init_LR[i,j] + init_LL[i,j] +
+  init_D[i,j] + init_SC[i,j] + init_Tr[i,j] + init_R[i,j]) * propinit_hiv[i, j, k])
 
 # Not sure how to set initial vals for these as they depend on
 # dynamics. 0 for now:
@@ -174,7 +168,7 @@ dim(ACFhaz1) <- c(patch_dims,sim_length)
 
 # Assign birthrate
 births_int[] <- user()
-births_t <- if(as.integer(step) < length( births_int )) 
+births_t <- if(as.integer(step) < length( births_int ))
   births_int[step+1] else births_int[length(births_int)]
 birth_rate_yr <- births_t/1000
 

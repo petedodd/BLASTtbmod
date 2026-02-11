@@ -115,6 +115,7 @@ __host__ __device__ real_type odin_sum3(const container x, int from_i, int to_i,
 // [[dust::param(pLL, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(popinit, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(progress_rate, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
+// [[dust::param(propinit_hiv, has_default = FALSE, default_value = NULL, rank = 3, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(regress_rate, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(sim_length, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(TB_HIV_mod, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
@@ -895,6 +896,11 @@ public:
     int dim_progSlow_12;
     int dim_progSlow_2;
     int dim_progSlow_3;
+    int dim_propinit_hiv;
+    int dim_propinit_hiv_1;
+    int dim_propinit_hiv_12;
+    int dim_propinit_hiv_2;
+    int dim_propinit_hiv_3;
     int dim_pSC_inmigr;
     int dim_pSC_inmigr_1;
     int dim_pSC_inmigr_12;
@@ -1190,6 +1196,7 @@ public:
     real_type ppK;
     real_type Prho;
     real_type progress_rate;
+    std::vector<real_type> propinit_hiv;
     real_type Psigma;
     real_type Ptau;
     real_type regress_rate;
@@ -3993,6 +4000,9 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_progSlow_1 = shared->patch_dims;
   shared->dim_progSlow_2 = shared->age_dims;
   shared->dim_progSlow_3 = shared->HIV_dims;
+  shared->dim_propinit_hiv_1 = shared->patch_dims;
+  shared->dim_propinit_hiv_2 = shared->age_dims;
+  shared->dim_propinit_hiv_3 = shared->HIV_dims;
   shared->dim_pSC_inmigr_1 = shared->patch_dims;
   shared->dim_pSC_inmigr_2 = shared->age_dims;
   shared->dim_pSC_inmigr_3 = shared->HIV_dims;
@@ -4432,6 +4442,8 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_progress_12 = shared->dim_progress_1 * shared->dim_progress_2;
   shared->dim_progSlow = shared->dim_progSlow_1 * shared->dim_progSlow_2 * shared->dim_progSlow_3;
   shared->dim_progSlow_12 = shared->dim_progSlow_1 * shared->dim_progSlow_2;
+  shared->dim_propinit_hiv = shared->dim_propinit_hiv_1 * shared->dim_propinit_hiv_2 * shared->dim_propinit_hiv_3;
+  shared->dim_propinit_hiv_12 = shared->dim_propinit_hiv_1 * shared->dim_propinit_hiv_2;
   shared->dim_pSC_inmigr = shared->dim_pSC_inmigr_1 * shared->dim_pSC_inmigr_2 * shared->dim_pSC_inmigr_3;
   shared->dim_pSC_inmigr_12 = shared->dim_pSC_inmigr_1 * shared->dim_pSC_inmigr_2;
   shared->dim_pTr_inmigr = shared->dim_pTr_inmigr_1 * shared->dim_pTr_inmigr_2 * shared->dim_pTr_inmigr_3;
@@ -4802,6 +4814,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->offset_variable_U = shared->dim_cum_inf_ByPatch + shared->dim_cum_inf_flux + shared->dim_cum_note_flux + shared->dim_incidence_bypatch + shared->dim_prevalence_bypatch + shared->dim_PrevByPatch + shared->dim_Sij + 2;
   shared->ppC = shared->ppB + shared->Palpha;
   shared->ppG = - shared->Pdelta * shared->Pgamma * shared->ppB / (real_type) ((shared->Pgamma - shared->Pepsilon) * (shared->Pomega + shared->Pdelta - shared->Pepsilon));
+  shared->propinit_hiv = user_get_array_fixed<real_type, 3>(user, "propinit_hiv", shared->propinit_hiv, {shared->dim_propinit_hiv_1, shared->dim_propinit_hiv_2, shared->dim_propinit_hiv_3}, NA_REAL, NA_REAL);
   {
      int i = 1;
      shared->zk[i - 1] = shared->Pomega + shared->Pdelta + shared->Pmu;
@@ -4952,105 +4965,57 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   for (int i = 1; i <= shared->dim_D_1; ++i) {
     for (int j = 1; j <= shared->dim_D_2; ++j) {
-      int k = 1;
-      shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_D_1; ++i) {
-    for (int j = 1; j <= shared->dim_D_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_D_3; ++k) {
+        shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = dust::math::floor(shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_LL_1; ++i) {
     for (int j = 1; j <= shared->dim_LL_2; ++j) {
-      int k = 1;
-      shared->initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_LL_1; ++i) {
-    for (int j = 1; j <= shared->dim_LL_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_LL_3; ++k) {
+        shared->initial_LL[i - 1 + shared->dim_LL_1 * (j - 1) + shared->dim_LL_12 * (k - 1)] = dust::math::floor(shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_LR_1; ++i) {
     for (int j = 1; j <= shared->dim_LR_2; ++j) {
-      int k = 1;
-      shared->initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_LR_1; ++i) {
-    for (int j = 1; j <= shared->dim_LR_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_LR_3; ++k) {
+        shared->initial_LR[i - 1 + shared->dim_LR_1 * (j - 1) + shared->dim_LR_12 * (k - 1)] = dust::math::floor(shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_N_1; ++i) {
     for (int j = 1; j <= shared->dim_N_2; ++j) {
-      int k = 1;
-      shared->initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1] + shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1] + shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1] + shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] + shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] + shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1] + shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_N_1; ++i) {
-    for (int j = 1; j <= shared->dim_N_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_N_3; ++k) {
+        shared->initial_N[i - 1 + shared->dim_N_1 * (j - 1) + shared->dim_N_12 * (k - 1)] = dust::math::floor((shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1] + shared->init_LR[shared->dim_init_LR_1 * (j - 1) + i - 1] + shared->init_LL[shared->dim_init_LL_1 * (j - 1) + i - 1] + shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] + shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] + shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1] + shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1]) * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_R_1; ++i) {
     for (int j = 1; j <= shared->dim_R_2; ++j) {
-      int k = 1;
-      shared->initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_R_1; ++i) {
-    for (int j = 1; j <= shared->dim_R_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_R_3; ++k) {
+        shared->initial_R[i - 1 + shared->dim_R_1 * (j - 1) + shared->dim_R_12 * (k - 1)] = dust::math::floor(shared->init_R[shared->dim_init_R_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_SC_1; ++i) {
     for (int j = 1; j <= shared->dim_SC_2; ++j) {
-      int k = 1;
-      shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_SC_1; ++i) {
-    for (int j = 1; j <= shared->dim_SC_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_SC_3; ++k) {
+        shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = dust::math::floor(shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_Tr_1; ++i) {
     for (int j = 1; j <= shared->dim_Tr_2; ++j) {
-      int k = 1;
-      shared->initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_Tr_1; ++i) {
-    for (int j = 1; j <= shared->dim_Tr_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_Tr_3; ++k) {
+        shared->initial_Tr[i - 1 + shared->dim_Tr_1 * (j - 1) + shared->dim_Tr_12 * (k - 1)] = dust::math::floor(shared->init_Tr[shared->dim_init_Tr_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
   for (int i = 1; i <= shared->dim_U_1; ++i) {
     for (int j = 1; j <= shared->dim_U_2; ++j) {
-      int k = 1;
-      shared->initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1];
-    }
-  }
-  for (int i = 1; i <= shared->dim_U_1; ++i) {
-    for (int j = 1; j <= shared->dim_U_2; ++j) {
-      for (int k = 2; k <= 3; ++k) {
-        shared->initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = 0;
+      for (int k = 1; k <= shared->dim_U_3; ++k) {
+        shared->initial_U[i - 1 + shared->dim_U_1 * (j - 1) + shared->dim_U_12 * (k - 1)] = dust::math::floor(shared->init_U[shared->dim_init_U_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }

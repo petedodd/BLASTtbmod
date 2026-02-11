@@ -92,8 +92,35 @@ get.parms <- function(start_year,
     Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
     Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for kids TODO check parms for infectiousness
   }
-  if(missing(ari0)){ #TODO think about making vector?
-    ari0 <- qlnorm(0.5, log(2), 0.75)/1e2
+  if (missing(ari0)) { # TODO think about making vector?
+    ari0 <- qlnorm(0.5, log(2), 0.75) / 1e2
+  }
+
+  ## HIV initial state
+  propinit_hiv <- array(0, c(
+    patch_dims,
+    age_dims,
+    HIV_dims
+  ))
+
+  if (!start_year %in% hivp_mwi$Period) {
+    stop("Need start year in HIV prevalence data range!")
+  }
+
+  artp <- BLASTtbmod::hivp_mwi[
+    Period == start_year & variable == "ARTpc", value
+  ]
+
+  ## 15-49 & oldies
+  for (j in 2:3) {
+    propinit_hiv[, j, 2] <- BLASTtbmod::blantyre$hivpre * (1 - artp)
+    propinit_hiv[, j, 3] <- BLASTtbmod::blantyre$hivpre * artp
+  }
+  ## complete HIV-
+  for (j in 1:7) { # patch
+    for (k in 1:3) { # zone
+      propinit_hiv[j, k, 1] <- 1 - sum(propinit_hiv[j, k, 2:3])
+    }
   }
 
   ## Set up list to pass to model
@@ -110,7 +137,8 @@ get.parms <- function(start_year,
     age_rate = c(1 / 15, 1 / 35, 1e-6),
     agefracs = age.frax, # initial age fractions
     ageMids = c(15 / 2, (15 + 50) / 2, 60),
-    initD = Dinit, #initial state
+    initD = Dinit, # initial state
+    propinit_hiv = propinit_hiv,
     births_int = births_int,
     HIV_int = HIV_int,
     ART_int = ART_int,
@@ -137,9 +165,10 @@ get.parms <- function(start_year,
     tfr = qbeta(0.5, 2.71, 87.55), # CFR treated TB - tfr (txf)
     cfr = qbeta(0.5, 25.48, 33.78), # CFR untreated TB - cfr (cfrn)
     ari0 = ari0, # Initial condition parameter - ?? (ari0)
-    ACFhaz0 = matrix(0.0,nrow=patch_dims,ncol=sim_length), #asymp ACF haz
-    ACFhaz1 = matrix(0.0,nrow=patch_dims,ncol=sim_length)  #symp ACF haz
+    ACFhaz0 = matrix(0.0, nrow = patch_dims, ncol = sim_length), # asymp ACF haz
+    ACFhaz1 = matrix(0.0, nrow = patch_dims, ncol = sim_length) # symp ACF haz
   )
   return(parms)
 }
+
 
