@@ -366,10 +366,10 @@ plot_HIV_dynamic <- function(Y,
   X <- data.table::melt(X[, ..vars], id = id)
   out_lab <- out_type # default
   if (out_type == "N") {
-    out_lab <- "Population"
+    out_lab <- "HIV prevalence"
   } else {
     if (out_type == "incidence") {
-      out_lab <- "Incidence"
+      out_lab <- "HIV incidence"
     } else {
       if (out_type == "notifrate") {
         out_lab <- "Notification rate"
