@@ -165,6 +165,9 @@ get.parms <- function(start_year,
     m_in_int = m_in_int,
     IRR = rep(1, patch_dims),
     MM = (diag(patch_dims) * 3 + 0.5) / 3, # mixing matrix
+    ## some HIV specifics
+    HIV_dur_ratio = 1, #how much shorter TB in HIV+/ART-
+    ART_det_OR = 1,    #OR for detection in ART+
     ## TODO hyperparms separate data object
     progress_rate = 0.5, # Progression to clinical
     regress_rate = 0.05, # regression to subclinical
