@@ -388,7 +388,7 @@ plot_HIV_dynamic <- function(Y,
       legend.position = "top",
       legend.title = element_blank()
     ) +
-    ggplot2::scale_color_discrete(labels = c("HIV+/ART-", "HIV+/ART+"))
+    ggplot2::scale_color_discrete(labels = c("HIV+", "ART/HIV"))
   if (by_patch == TRUE) {
     wrap_vars <- id[-which(id == "step")]
     GP <- GP + ggplot2::facet_wrap(wrap_vars)

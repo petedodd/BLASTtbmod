@@ -68,11 +68,11 @@ get.parms <- function(start_year,
 
   ## Time varying ART initiation - interpolate
   ## ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
-  args$ART_int <- rep(0.25, sim_length)
+  ART_int <- rep(0.25, sim_length)
 
   ## Risk-modifiers for TB based on HIV status
   TB_HIV_mod <- c(1, 1, 1) # infection by HIV
-  Hirr <- c(1, 10, 2) # progression IRR by HIV
+  Hirr <- c(1, 20, 4.4) # progression IRR by HIV
 
   ## Background death rates by HIV index
   ## set background death rate for ART same as no HIV
