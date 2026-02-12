@@ -1,12 +1,14 @@
 ##' Create parameter object for model
 ##'
-##' TODO
+##' Defaults for various things needed for model to run
+##'
 ##' @title Create parameter object
 ##' @param start_year Earliest year of simulation
 ##' @param years N years in simulation
 ##' @param Dinit Matrix of initial prevalences
 ##' @param ari0 initial ARIs for initial state
 ##' @param hivoffset How many years ahead is Blantyre HIV incidence than MWI?
+##' @param hivfac HIV incidence in Blantyre relative to MWI
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -16,7 +18,8 @@ get.parms <- function(start_year,
                       years,
                       Dinit,
                       ari0,
-                      hivoffset=5) {
+                      hivoffset = 0,
+                      hivfac = 2) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -55,7 +58,7 @@ get.parms <- function(start_year,
     method = "linear",
     rule = 2
   )$y
-  hinc <- exp(log_hinc)
+  hinc <- exp(log_hinc) * hivfac
 
   ## interpolate HIV
   HIV_int <- approx(
@@ -64,7 +67,8 @@ get.parms <- function(start_year,
   )$y
 
   ## Time varying ART initiation - interpolate
-  ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
+  ## ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
+  args$ART_int <- rep(0.25, sim_length)
 
   ## Risk-modifiers for TB based on HIV status
   TB_HIV_mod <- c(1, 1, 1) # infection by HIV
@@ -107,7 +111,7 @@ get.parms <- function(start_year,
     Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
     Dinit[, 2:age_dims] <- 1e-3
   }
-  if (missing(ari0)) { # TODO think about making vector?
+  if (missing(ari0)) {
     ari0 <- qlnorm(0.5, log(2), 0.75) / 1e2
   }
 
@@ -166,8 +170,8 @@ get.parms <- function(start_year,
     IRR = rep(1, patch_dims),
     MM = (diag(patch_dims) * 3 + 0.5) / 3, # mixing matrix
     ## some HIV specifics
-    HIV_dur_ratio = 1, #how much shorter TB in HIV+/ART-
-    ART_det_OR = 1,    #OR for detection in ART+
+    HIV_dur_ratio = 6, # how much shorter TB in HIV+/ART-
+    ART_det_OR = 2, # OR for detection in ART+
     ## TODO hyperparms separate data object
     progress_rate = 0.5, # Progression to clinical
     regress_rate = 0.05, # regression to subclinical
@@ -188,5 +192,6 @@ get.parms <- function(start_year,
   )
   return(parms)
 }
+
 
 

@@ -536,7 +536,9 @@ plot_HIV_in_TB <- function(X, start_year = 2015) {
     ggplot2::geom_ribbon(data = mhtb[t > 1], alpha = .3, col = NA, fill = 2) +
     ggplot2::geom_pointrange() +
     ggplot2::ylab("Proportion of notified TB with HIV") +
-    ggplot2::theme_linedraw()
+    ggplot2::theme_linedraw() +
+    ggplot2::ylim(c(0, 1))
 }
+
 
 

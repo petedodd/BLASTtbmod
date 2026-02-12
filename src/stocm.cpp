@@ -274,6 +274,11 @@ public:
     int dim_detection_SC_12;
     int dim_detection_SC_2;
     int dim_detection_SC_3;
+    int dim_dpropinit_hiv;
+    int dim_dpropinit_hiv_1;
+    int dim_dpropinit_hiv_12;
+    int dim_dpropinit_hiv_2;
+    int dim_dpropinit_hiv_3;
     int dim_dtct_rate;
     int dim_dtct_rate_SC;
     int dim_dtct_rate_SCm;
@@ -1114,6 +1119,7 @@ public:
     int dim_Uinfs_2;
     int dim_Uinfs_3;
     int dim_zk;
+    std::vector<real_type> dpropinit_hiv;
     real_type dt;
     std::vector<real_type> dtct_rate;
     std::vector<real_type> dtct_rate_SC;
@@ -3650,6 +3656,9 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_detection_SC_1 = shared->patch_dims;
   shared->dim_detection_SC_2 = shared->age_dims;
   shared->dim_detection_SC_3 = shared->HIV_dims;
+  shared->dim_dpropinit_hiv_1 = shared->patch_dims;
+  shared->dim_dpropinit_hiv_2 = shared->age_dims;
+  shared->dim_dpropinit_hiv_3 = shared->HIV_dims;
   shared->dim_dtct_rate_SCm_1 = shared->patch_dims;
   shared->dim_dtct_rate_SCm_2 = shared->HIV_dims;
   shared->dim_dtct_ratem_1 = shared->patch_dims;
@@ -4232,6 +4241,8 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_detection_12 = shared->dim_detection_1 * shared->dim_detection_2;
   shared->dim_detection_SC = shared->dim_detection_SC_1 * shared->dim_detection_SC_2 * shared->dim_detection_SC_3;
   shared->dim_detection_SC_12 = shared->dim_detection_SC_1 * shared->dim_detection_SC_2;
+  shared->dim_dpropinit_hiv = shared->dim_dpropinit_hiv_1 * shared->dim_dpropinit_hiv_2 * shared->dim_dpropinit_hiv_3;
+  shared->dim_dpropinit_hiv_12 = shared->dim_dpropinit_hiv_1 * shared->dim_dpropinit_hiv_2;
   shared->dim_dtct_rate_SCm = shared->dim_dtct_rate_SCm_1 * shared->dim_dtct_rate_SCm_2;
   shared->dim_dtct_ratem = shared->dim_dtct_ratem_1 * shared->dim_dtct_ratem_2;
   shared->dim_ellij = shared->dim_ellij_1 * shared->dim_ellij_2;
@@ -4639,6 +4650,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   internal.Ddeaths = std::vector<real_type>(shared->dim_Ddeaths);
   internal.detection = std::vector<real_type>(shared->dim_detection);
   internal.detection_SC = std::vector<real_type>(shared->dim_detection_SC);
+  shared->dpropinit_hiv = std::vector<real_type>(shared->dim_dpropinit_hiv);
   internal.dtct_rate_SCm = std::vector<real_type>(shared->dim_dtct_rate_SCm);
   internal.dtct_ratem = std::vector<real_type>(shared->dim_dtct_ratem);
   internal.ellij = std::vector<real_type>(shared->dim_ellij);
@@ -4890,6 +4902,25 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->Pdelta = shared->dtct_rate[0];
   shared->ppC = shared->ppB + shared->Palpha;
   shared->propinit_hiv = user_get_array_fixed<real_type, 3>(user, "propinit_hiv", shared->propinit_hiv, {shared->dim_propinit_hiv_1, shared->dim_propinit_hiv_2, shared->dim_propinit_hiv_3}, NA_REAL, NA_REAL);
+  for (int i = 1; i <= shared->dim_dpropinit_hiv_1; ++i) {
+    for (int j = 1; j <= shared->dim_dpropinit_hiv_2; ++j) {
+      for (int k = 1; k <= shared->dim_dpropinit_hiv_3; ++k) {
+        shared->dpropinit_hiv[i - 1 + shared->dim_dpropinit_hiv_1 * (j - 1) + shared->dim_dpropinit_hiv_12 * (k - 1)] = shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1] * shared->Hirr[k - 1];
+      }
+    }
+  }
+  for (int i = 1; i <= shared->dim_dpropinit_hiv_1; ++i) {
+    for (int j = 1; j <= shared->dim_dpropinit_hiv_2; ++j) {
+      int k = 2;
+      shared->dpropinit_hiv[i - 1 + shared->dim_dpropinit_hiv_1 * (j - 1) + shared->dim_dpropinit_hiv_12 * (k - 1)] = shared->dpropinit_hiv[shared->dim_dpropinit_hiv_12 * 1 + shared->dim_dpropinit_hiv_1 * (j - 1) + i - 1] / (real_type) shared->HIV_dur_ratio;
+    }
+  }
+  for (int i = 1; i <= shared->dim_dpropinit_hiv_1; ++i) {
+    for (int j = 1; j <= shared->dim_dpropinit_hiv_2; ++j) {
+      int k = 1;
+      shared->dpropinit_hiv[i - 1 + shared->dim_dpropinit_hiv_1 * (j - 1) + shared->dim_dpropinit_hiv_12 * (k - 1)] = (1 - odin_sum3<real_type>(shared->dpropinit_hiv.data(), i - 1, i, j - 1, j, 1, 3, shared->dim_dpropinit_hiv_1, shared->dim_dpropinit_hiv_12) > 0 ? 1 - odin_sum3<real_type>(shared->dpropinit_hiv.data(), i - 1, i, j - 1, j, 1, 3, shared->dim_dpropinit_hiv_1, shared->dim_dpropinit_hiv_12) : 0);
+    }
+  }
   for (int i = 1; i <= shared->dim_initF_1; ++i) {
     for (int j = 1; j <= shared->dim_initF_2; ++j) {
       shared->initF[i - 1 + shared->dim_initF_1 * (j - 1)] = (1 - dust::math::exp(- shared->ari0 * shared->ageMids[j - 1])) * (1 - dust::math::exp(- 2 * shared->ari0)) * (1 - 5 * shared->initD[shared->dim_initD_1 * (j - 1) + i - 1] / (real_type) 2);
@@ -5042,7 +5073,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   for (int i = 1; i <= shared->dim_D_1; ++i) {
     for (int j = 1; j <= shared->dim_D_2; ++j) {
       for (int k = 1; k <= shared->dim_D_3; ++k) {
-        shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = dust::math::floor(shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
+        shared->initial_D[i - 1 + shared->dim_D_1 * (j - 1) + shared->dim_D_12 * (k - 1)] = dust::math::floor(shared->init_D[shared->dim_init_D_1 * (j - 1) + i - 1] * shared->dpropinit_hiv[shared->dim_dpropinit_hiv_12 * (k - 1) + shared->dim_dpropinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
@@ -5077,7 +5108,7 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   for (int i = 1; i <= shared->dim_SC_1; ++i) {
     for (int j = 1; j <= shared->dim_SC_2; ++j) {
       for (int k = 1; k <= shared->dim_SC_3; ++k) {
-        shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = dust::math::floor(shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] * shared->propinit_hiv[shared->dim_propinit_hiv_12 * (k - 1) + shared->dim_propinit_hiv_1 * (j - 1) + i - 1]);
+        shared->initial_SC[i - 1 + shared->dim_SC_1 * (j - 1) + shared->dim_SC_12 * (k - 1)] = dust::math::floor(shared->init_SC[shared->dim_init_SC_1 * (j - 1) + i - 1] * shared->dpropinit_hiv[shared->dim_dpropinit_hiv_12 * (k - 1) + shared->dim_dpropinit_hiv_1 * (j - 1) + i - 1]);
       }
     }
   }
