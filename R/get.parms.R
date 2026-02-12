@@ -1,11 +1,14 @@
 ##' Create parameter object for model
 ##'
-##' TODO
+##' Defaults for various things needed for model to run
+##'
 ##' @title Create parameter object
 ##' @param start_year Earliest year of simulation
 ##' @param years N years in simulation
 ##' @param Dinit Matrix of initial prevalences
 ##' @param ari0 initial ARIs for initial state
+##' @param hivoffset How many years ahead is Blantyre HIV incidence than MWI?
+##' @param hivfac HIV incidence in Blantyre relative to MWI
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -14,7 +17,9 @@
 get.parms <- function(start_year,
                       years,
                       Dinit,
-                      ari0) {
+                      ari0,
+                      hivoffset = 0,
+                      hivfac = 2) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -45,19 +50,36 @@ get.parms <- function(start_year,
   age.frax <- age.frax / sum(age.frax)
 
   ## Get correct years for HIV
-  HIV_inc_1990_2021 <- BLASTtbmod::HIV_inc_1990_2021[which(HIV_inc_1990_2021$Year %in% start_year:(start_year + years)), ]
-  HIV_int <- approx(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est, n = sim_length)$y
+  offset <- hivoffset
+  log_hinc <- Hmisc::approxExtrap(
+    x = BLASTtbmod::HIV_inc_1990_2021$Year,
+    y = log(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est),
+    xout = (start_year + offset):(offset + start_year + years),
+    method = "linear",
+    rule = 2
+  )$y
+  hinc <- exp(log_hinc) * hivfac
+
+  ## interpolate HIV
+  HIV_int <- approx(
+    hinc,
+    n = sim_length
+  )$y
 
   ## Time varying ART initiation - interpolate
-  ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
+  ## ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
+  ART_int <- rep(0.25, sim_length)
 
   ## Risk-modifiers for TB based on HIV status
   TB_HIV_mod <- c(1, 1, 1) # infection by HIV
-  Hirr <- c(1, 10, 2) # progression IRR by HIV
+  Hirr <- c(1, 20, 4.4) # progression IRR by HIV
 
   ## Background death rates by HIV index
   ## set background death rate for ART same as no HIV
-  tiz <- tz <- seq(from = start_year, to = (start_year + years), by = dt) # Year timepoints
+  tiz <- tz <- seq(
+    from = start_year,
+    to = (start_year + years), by = dt
+  ) # Year timepoints
   tiz <- round(tiz)
   tiz <- as.integer(tiz) - start_year + 1 # which MU row to use
 
@@ -65,35 +87,59 @@ get.parms <- function(start_year,
   ## NOTE: m_in still placeholder
   ## No longer interpolated - takes static value for corresponding year for each timestep
   mu_noHIV_int <- m_in_int <- matrix(data = 0, ncol = sim_length, nrow = age_dims)
+  mu_ART_int <- mu_noHIV_int
+  mu_HIV_int <- mu_noHIV_int
   MU <- BLASTtbmod::MWI$omega[
     Year %in% start_year:(start_year + years),
     list(Year, AgeGrp, mu = omegaT - r)
   ]
-  MU <- as.matrix(dcast(MU, Year ~ AgeGrp, value.var = "mu"))[, -1] # mu per age group per year
+  MU <- as.matrix(
+    dcast(MU, Year ~ AgeGrp, value.var = "mu")
+  )[, -1] # mu per age group per year
   for (i in 1:ncol(mu_noHIV_int)) {
     for (j in 1:ncol(MU)) {
       val <- MU[tiz[i], j]
       mu_noHIV_int[j, i] <- ifelse(val > 0, val, 0) # net death/out
       m_in_int[j, i] <- ifelse(val < 0, -val, 0) # net in-migration
+      mu_HIV_int[j, i] <- ifelse(j > 1, 0.1, 0)
+      mu_ART_int[j, i] <- mu_noHIV_int[j, i]
     }
   }
-
-  ## TODO
-  ## mu_HIV_int <- matrix( data=NA, ncol = sim_length, nrow = age_dims )
-  ## for( i in 1:age_dims ){
-  ##   mu_noHIV_int[i,] <- approx( runif( years, min=0.01, max=0.07 ), n=sim_length )$y
-  ##   mu_HIV_int[i,] <- approx( runif( 30*age_dims, min=0.04, max=0.09 ), n=sim_length )$y
-  ## }
-  mu_ART_int <- mu_noHIV_int
-  mu_HIV_int <- mu_noHIV_int
 
   ## initial state for 'disease'
   if (missing(Dinit)) {
     Dinit <- matrix(0, nrow = patch_dims, ncol = age_dims)
-    Dinit[, 2:age_dims] <- 1e-3 # assuming prevalence ~ 0 for kids TODO check parms for infectiousness
+    Dinit[, 2:age_dims] <- 1e-3
   }
-  if(missing(ari0)){ #TODO think about making vector?
-    ari0 <- qlnorm(0.5, log(2), 0.75)/1e2
+  if (missing(ari0)) {
+    ari0 <- qlnorm(0.5, log(2), 0.75) / 1e2
+  }
+
+  ## HIV initial state
+  propinit_hiv <- array(0, c(
+    patch_dims,
+    age_dims,
+    HIV_dims
+  ))
+
+  if (!start_year %in% hivp_mwi$Period) {
+    stop("Need start year in HIV prevalence data range!")
+  }
+
+  artp <- BLASTtbmod::hivp_mwi[
+    Period == start_year & variable == "ARTpc", value
+  ]
+
+  ## 15-49 & oldies
+  for (j in 2:3) {
+    propinit_hiv[, j, 2] <- BLASTtbmod::blantyre$hivpre * (1 - artp)
+    propinit_hiv[, j, 3] <- BLASTtbmod::blantyre$hivpre * artp
+  }
+  ## complete HIV-
+  for (j in 1:7) { # patch
+    for (k in 1:3) { # zone
+      propinit_hiv[j, k, 1] <- 1 - sum(propinit_hiv[j, k, 2:3])
+    }
   }
 
   ## Set up list to pass to model
@@ -110,7 +156,8 @@ get.parms <- function(start_year,
     age_rate = c(1 / 15, 1 / 35, 1e-6),
     agefracs = age.frax, # initial age fractions
     ageMids = c(15 / 2, (15 + 50) / 2, 60),
-    initD = Dinit, #initial state
+    initD = Dinit, # initial state
+    propinit_hiv = propinit_hiv,
     births_int = births_int,
     HIV_int = HIV_int,
     ART_int = ART_int,
@@ -122,6 +169,9 @@ get.parms <- function(start_year,
     m_in_int = m_in_int,
     IRR = rep(1, patch_dims),
     MM = (diag(patch_dims) * 3 + 0.5) / 3, # mixing matrix
+    ## some HIV specifics
+    HIV_dur_ratio = 6, # how much shorter TB in HIV+/ART-
+    ART_det_OR = 2, # OR for detection in ART+
     ## TODO hyperparms separate data object
     progress_rate = 0.5, # Progression to clinical
     regress_rate = 0.05, # regression to subclinical
@@ -137,9 +187,11 @@ get.parms <- function(start_year,
     tfr = qbeta(0.5, 2.71, 87.55), # CFR treated TB - tfr (txf)
     cfr = qbeta(0.5, 25.48, 33.78), # CFR untreated TB - cfr (cfrn)
     ari0 = ari0, # Initial condition parameter - ?? (ari0)
-    ACFhaz0 = matrix(0.0,nrow=patch_dims,ncol=sim_length), #asymp ACF haz
-    ACFhaz1 = matrix(0.0,nrow=patch_dims,ncol=sim_length)  #symp ACF haz
+    ACFhaz0 = matrix(0.0, nrow = patch_dims, ncol = sim_length), # asymp ACF haz
+    ACFhaz1 = matrix(0.0, nrow = patch_dims, ncol = sim_length) # symp ACF haz
   )
   return(parms)
 }
+
+
 

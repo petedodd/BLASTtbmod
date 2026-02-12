@@ -366,10 +366,10 @@ plot_HIV_dynamic <- function(Y,
   X <- data.table::melt(X[, ..vars], id = id)
   out_lab <- out_type # default
   if (out_type == "N") {
-    out_lab <- "Population"
+    out_lab <- "HIV prevalence"
   } else {
     if (out_type == "incidence") {
-      out_lab <- "Incidence"
+      out_lab <- "HIV incidence"
     } else {
       if (out_type == "notifrate") {
         out_lab <- "Notification rate"
@@ -379,6 +379,7 @@ plot_HIV_dynamic <- function(Y,
   ## plot
   GP <- ggplot2::ggplot(X, aes(step * dt + start_year, value, col = variable)) +
     ggplot2::geom_line() +
+    ggplot2::ylim(c(0, 1)) +
     ggplot2::scale_y_continuous(label = scales::percent) +
     ggplot2::theme_linedraw() +
     ggplot2::xlab("Year") +
@@ -387,7 +388,7 @@ plot_HIV_dynamic <- function(Y,
       legend.position = "top",
       legend.title = element_blank()
     ) +
-    ggplot2::scale_color_discrete(labels = c("HIV+/ART-", "HIV+/ART+"))
+    ggplot2::scale_color_discrete(labels = c("HIV+", "ART/HIV"))
   if (by_patch == TRUE) {
     wrap_vars <- id[-which(id == "step")]
     GP <- GP + ggplot2::facet_wrap(wrap_vars)
@@ -397,6 +398,8 @@ plot_HIV_dynamic <- function(Y,
   }
   GP
 }
+
+
 
 
 
@@ -421,19 +424,6 @@ plot_TB_dynamics <- function(Y, chain_step_num = 1,
                              start_year = 2015) {
   ## extract relevant data
   D <- extract.pops(Y, chain_step_num, out_type)
-
-  ## ## version with multi
-  ## D <- extract.pops.multi( Y, dim(Y)[2], out_type )
-  ## names(D)[names(D)==out_type] <- "value"
-  ## D[,varname:=out_type]
-  ## D[,step:=t]
-  ## eps <- 0.25
-  ## D <- D[ ,.( mid=median( noterate ),
-  ##            lo = quantile( noterate, eps ),
-  ##            hi = quantile( noterate, 1-eps )),
-  ##        by=.(t, patch )]
-  ## TODO this will need adaptation of plotting code below (see noterate for eg)
-
   by_comp <- "patch"
   dt <- 1 / 12
   D <- D[step > 1]
@@ -480,111 +470,75 @@ plot_TB_dynamics <- function(Y, chain_step_num = 1,
     )
   }
   plt
-  e
 }
 
 
 
-## Note - this may need to be made more flexible to align with
-## different start-years for real-data comparison
-## Plots HIV prevalence among TB notes -
-## Choose % or per 100,000
-## Choose to separate HIV into ART+/- or not
-## Currently works for single particle/chain step.... add variation over chain??
-#' @title Plot HIV prevalence among TB notifications#'
-#' @param Y input data
-#' @param chain_step_num chain step
-#' @param separate separate HIV by ART status
-#' @importFrom dplyr filter group_by summarise ungroup
-#' @importFrom tidyr complete
-#' @importFrom plyr mapvalues
-#' @importFrom ggh4x facet_grid2
-#' @return ggplot2
-#' @export
-HIV_prev_TB <- function(Y, n_chain_steps = 100, separate = FALSE) {
-  D <- extract.pops.multi(Y, n_chain_steps, out_type = "notes")
-  real_dat <- BLASTtbmod::TB_notes_HIV_patch
+##' Compare HIV in TB
+##'
+##' This processes model outputs to compare the proportion of TB that is HIV+ over time
+##'
+##' @title PLotter for HIV in TB
+##' @param X output from `run.model`
+##' @param start_year the start year for the simulation
+##' @return a ggplot2 plot
+##' @author Pete Dodd
+##' @export
+plot_HIV_in_TB <- function(X, start_year = 2015) {
+  ## reform data
+  D <- extract.pops.multi(X, dim(X)[2], out_type = "notes")
 
-  if (separate == FALSE) {
-    aggD$hiv <- plyr::mapvalues(aggD$hiv,
-      from = c("HIV+/ART-", "HIV+/ART+"),
-      to = c("HIV+", "HIV+")
+  ## model data
+  mhtb <- D[,
+    .(total = sum(notes)),
+    by = .(
+      id = chain_step,
+      t,
+      hiv = ifelse(hiv == "HIV-", "HIV-", "HIV+")
     )
-    real_dat$hiv <- plyr::mapvalues(real_dat$hiv,
-      from = c("HIV+/ART-", "HIV+/ART+"),
-      to = c("HIV+", "HIV+")
-    )
-    replen <- 2
-  } else {
-    replen <- 3
-  }
-
-  # Aggregate over appropriate compartments
-  aggD <- D %>%
-    dplyr::group_by(patch, hiv, chain_step) %>%
-    dplyr::summarise(tot_notes = sum(notes)) %>%
-    data.table::as.data.table()
-
-  # Calculate prevalence
-  D_notes <- aggD %>%
-    dplyr::group_by(patch, chain_step) %>%
-    dplyr::summarise(grandtot = sum(tot_notes, na.rm = T))
-  D_out <- merge(aggD, D_notes, by = c("patch", "chain_step"), all.x = T)
-  D_out$prev_pc <- D_out$tot_notes / D_out$grandtot * 100
-
-  # Generate ribbon
-  eps = 0.25
-  D_out <- D_out[, .(
-    midpc = median(prev_pc),
-    lopc = quantile(prev_pc, eps),
-    hipc = quantile(prev_pc, 1 - eps)
-  ),
-  by = .(hiv, patch)
   ]
 
-  # Wrangle real data
-  real_out <- real_dat %>%
-    dplyr::filter(total > 0) %>%
-    dplyr::group_by(patch, hiv) %>%
-    dplyr::summarise(tot = sum(total)) %>%
-    dplyr::ungroup() %>%
-    tidyr::complete(patch, hiv, fill = list(sum_quantity = 0))
-  real_notes <- real_out %>%
-    dplyr::group_by(patch) %>%
-    dplyr::summarise(grandtot = sum(tot, na.rm = T))
-  real_out <- merge(real_out, real_notes, by = "patch", all.x = T)
-  real_out$prev_pc_real <- real_out$tot / real_out$grandtot * 100
+  mhtb <- dcast(mhtb, id + t ~ hiv, value.var = "total")
+  mhtb[, p := `HIV+` / (`HIV+` + `HIV-` + 1e-6)]
+  mhtb <- mhtb[,
+    .(p = mean(p), lo = quantile(p, .025), hi = quantile(p, 1 - .025)),
+    by = .(t)
+  ]
+  mhtb[, year := start_year + (t - 1) / 12]
 
-  D_out <- merge(D_out, real_out[, c("patch", "hiv", "prev_pc_real")],
-    by = c("patch", "hiv"),
-  )
-  D_out$patch <- substr(D_out$patch, 7, 7)
-  D_out$pad_hi <- sapply(1:nrow(D_out), function(x) {
-    min(
-      D_out$hipc[x] + 5,
-      D_out$prev_pc_real + 5, 100
+  ## real
+  real_dat <- as.data.table(BLASTtbmod::TB_notes_HIV_patch)
+  real_dat[, c("year", "month") := tstrsplit(monthyr, split = "-")]
+
+  htb <- real_dat[,
+    .(total = sum(total)),
+    by = .(
+      year,
+      hiv = ifelse(hiv == "HIV-", "HIV-", "HIV+")
     )
-  })
-  D_out$pad_lo <- sapply(1:nrow(D_out), function(x) {
-    max(
-      D_out$lopc[x] - 5,
-      D_out$prev_pc_real - 5, 0
+  ]
+
+  htb[, n := sum(total), by = year]
+  htb <- htb[hiv == "HIV+"]
+  htb[, p := total / n]
+  htb[, s := sqrt(p * (1 - p) / n)]
+  htb[, c("lo", "hi") := .(p - 1.96 * s, p + 1.96 * s)]
+  htb[, year := as.numeric(year)]
+
+  ## plot
+  ggplot2::ggplot(
+    htb,
+    aes(
+      x = year, y = p,
+      ymin = lo, ymax = hi
     )
-  })
-
-
-  p <- ggplot2::ggplot(D_out, aes(x = patch, y = midpc)) +
-    ggplot2::geom_point() +
-    ggplot2::geom_errorbar(aes(ymin = lopc, ymax = hipc), width = 0.4) +
-    ggplot2::geom_blank(aes(x = patch, y = pad_lo)) +
-    ggplot2::geom_blank(aes(x = patch, y = pad_hi)) +
-    ggh4x::facet_grid2(~hiv,
-      independent = T,
-      scales = "free"
-    ) +
-    ggplot2::geom_point(aes(y = prev_pc_real), col = 2, shape = 16) +
-    ggplot2::ylab("HIV status among TB notifications (%)") +
-    ggplot2::xlab("Patch") +
-    ggplot2::ggtitle("Real data (red), median + 50% PI simulated (black)")
-  print(p)
+  ) +
+    ggplot2::geom_ribbon(data = mhtb[t > 1], alpha = .3, col = NA, fill = 2) +
+    ggplot2::geom_pointrange() +
+    ggplot2::ylab("Proportion of notified TB with HIV") +
+    ggplot2::theme_linedraw() +
+    ggplot2::ylim(c(0, 1))
 }
+
+
+
