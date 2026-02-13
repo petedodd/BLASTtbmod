@@ -165,12 +165,6 @@ plot_compare_demog <- function(Y,
 }
 
 
-## library(scales)
-## library(plyr)
-## library(dplyr)
-## library(ggh4x)
-
-
 # Separate function to deal with aggregating rates
 # Defaults to providing notifrates over patches only
 # Currently will only do patch in line with current real data
@@ -364,6 +358,9 @@ plot_HIV_dynamic <- function(Y,
     X[, ARTpc := NA_real_]
   }
   X <- data.table::melt(X[, ..vars], id = id)
+  if (by_patch == TRUE) {
+    X[, zone := gsub("Patch", "Zone", patch)]
+  }
   out_lab <- out_type # default
   if (out_type == "N") {
     out_lab <- "HIV prevalence"
@@ -379,8 +376,6 @@ plot_HIV_dynamic <- function(Y,
   ## plot
   GP <- ggplot2::ggplot(X, aes(step * dt + start_year, value, col = variable)) +
     ggplot2::geom_line() +
-    ggplot2::ylim(c(0, 1)) +
-    ggplot2::scale_y_continuous(label = scales::percent) +
     ggplot2::theme_linedraw() +
     ggplot2::xlab("Year") +
     ggplot2::ylab(paste(out_lab, "(proportion)")) +
@@ -390,8 +385,11 @@ plot_HIV_dynamic <- function(Y,
     ) +
     ggplot2::scale_color_discrete(labels = c("HIV+", "ART/HIV"))
   if (by_patch == TRUE) {
-    wrap_vars <- id[-which(id == "step")]
-    GP <- GP + ggplot2::facet_wrap(wrap_vars)
+    GP <- GP +
+      ggplot2::scale_y_continuous(label = scales::percent) +
+      ggplot2::facet_wrap(~zone, scales = "free")
+  } else {
+    GP <- GP + ggplot2::scale_y_continuous(label = scales::percent, limits = c(0, 1))
   }
   if (show_ART == FALSE) {
     GP <- GP + ggplot2::theme(legend.position = "none")
