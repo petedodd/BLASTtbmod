@@ -378,16 +378,18 @@ plot_HIV_dynamic <- function(Y,
     ggplot2::geom_line() +
     ggplot2::theme_linedraw() +
     ggplot2::xlab("Year") +
-    ggplot2::ylab(paste(out_lab, "(proportion)")) +
+    ggplot2::ylab(paste(out_lab, "")) +
     ggplot2::theme(
       legend.position = "top",
       legend.title = element_blank()
     ) +
     ggplot2::scale_color_discrete(labels = c("HIV+", "ART/HIV"))
   if (by_patch == TRUE) {
+    mx <- X[, max(value, na.rm = TRUE)] * 1.1
+    mn <- X[, min(value, na.rm = TRUE)] * 0.9
     GP <- GP +
-      ggplot2::scale_y_continuous(label = scales::percent) +
-      ggplot2::facet_wrap(~zone, scales = "free")
+      ggplot2::scale_y_continuous(label = scales::percent, limits = c(mn, mx)) +
+      ggplot2::facet_wrap(~zone)
   } else {
     GP <- GP + ggplot2::scale_y_continuous(label = scales::percent, limits = c(0, 1))
   }
@@ -534,6 +536,7 @@ plot_HIV_in_TB <- function(X, start_year = 2015) {
     ggplot2::geom_ribbon(data = mhtb[t > 1], alpha = .3, col = NA, fill = 2) +
     ggplot2::geom_pointrange() +
     ggplot2::ylab("Proportion of notified TB with HIV") +
+    ggplot2::xlab("Year") +
     ggplot2::theme_linedraw() +
     ggplot2::ylim(c(0, 1))
 }
