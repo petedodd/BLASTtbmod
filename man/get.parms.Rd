@@ -4,7 +4,15 @@
 \alias{get.parms}
 \title{Create parameter object}
 \usage{
-get.parms(start_year, years, Dinit, ari0, hivoffset = 0, hivfac = 2)
+get.parms(
+  start_year,
+  years,
+  Dinit,
+  ari0,
+  hivoffset = 0,
+  hivfac = 2,
+  hivdecline = 0
+)
 }
 \arguments{
 \item{start_year}{Earliest year of simulation}
@@ -18,6 +26,8 @@ get.parms(start_year, years, Dinit, ari0, hivoffset = 0, hivfac = 2)
 \item{hivoffset}{How many years ahead is Blantyre HIV incidence than MWI?}
 
 \item{hivfac}{HIV incidence in Blantyre relative to MWI}
+
+\item{hivdecline}{HIV decline rate from peak: overrides if >0}
 }
 \value{
 list

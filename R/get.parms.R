@@ -9,6 +9,7 @@
 ##' @param ari0 initial ARIs for initial state
 ##' @param hivoffset How many years ahead is Blantyre HIV incidence than MWI?
 ##' @param hivfac HIV incidence in Blantyre relative to MWI
+##' @param hivdecline HIV decline rate from peak: overrides if >0
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -19,7 +20,8 @@ get.parms <- function(start_year,
                       Dinit,
                       ari0,
                       hivoffset = 0,
-                      hivfac = 2) {
+                      hivfac = 2,
+                      hivdecline = 0) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -46,14 +48,25 @@ get.parms <- function(start_year,
   births_int <- approx(birthrate_dat$birthrate, n = sim_length)$y
 
   ## initial age frax
-  age.frax <- BLASTtbmod::MWI$N[Year == start_year, PopTotal] # NOTE requires ages in order
+  age.frax <- BLASTtbmod::MWI$N[
+    Year == start_year,
+    PopTotal
+  ] # NOTE requires ages in order
   age.frax <- age.frax / sum(age.frax)
 
   ## Get correct years for HIV
+  hiv_series <- BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est
+  ## if hivdecline > 0, use a decline rate from the peak
+  if (hivdecline > 0) {
+    peakloc <- which.max(hiv_series)
+    afterpeak <- peakloc:length(hiv_series)
+    declinefac <- exp(-hivdecline * (afterpeak - peakloc))
+    hiv_series[afterpeak] <- hiv_series[peakloc] * declinefac
+  }
   offset <- hivoffset
   log_hinc <- Hmisc::approxExtrap(
     x = BLASTtbmod::HIV_inc_1990_2021$Year,
-    y = log(BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est),
+    y = log(hiv_series),
     xout = (start_year + offset):(offset + start_year + years),
     method = "linear",
     rule = 2
