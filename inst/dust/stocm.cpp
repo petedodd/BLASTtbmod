@@ -950,6 +950,7 @@ public:
     int dim_Sij_1;
     int dim_Sij_2;
     int dim_slfcr_rate;
+    int dim_slfcr_rate_SC;
     int dim_stabilisations;
     int dim_stabilisations_1;
     int dim_stabilisations_12;
@@ -962,6 +963,7 @@ public:
     int dim_TB_deaths_3;
     int dim_TB_HIV_mod;
     int dim_TBd_rate;
+    int dim_TBd_rate_SC;
     int dim_TBdeaths;
     int dim_TBdeaths_1;
     int dim_TBdeaths_12;
@@ -1147,9 +1149,11 @@ public:
     real_type relinf;
     int sim_length;
     std::vector<real_type> slfcr_rate;
+    std::vector<real_type> slfcr_rate_SC;
     real_type t_dur;
     std::vector<real_type> TB_HIV_mod;
     std::vector<real_type> TBd_rate;
+    std::vector<real_type> TBd_rate_SC;
     std::vector<real_type> tbi_D;
     std::vector<real_type> tbi_LL;
     std::vector<real_type> tbi_LR;
@@ -1497,19 +1501,19 @@ public:
     for (int i = 1; i <= shared->dim_p_progress_1; ++i) {
       for (int j = 1; j <= shared->dim_p_progress_2; ++j) {
         int k = 1;
-        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + shared->progress_rate) : 0);
+        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_progress_1; ++i) {
       for (int j = 1; j <= shared->dim_p_progress_2; ++j) {
         int k = 2;
-        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + shared->progress_rate) : 0);
+        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_progress_1; ++i) {
       for (int j = 1; j <= shared->dim_p_progress_2; ++j) {
         int k = 3;
-        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + shared->progress_rate) : 0);
+        internal.p_progress[i - 1 + shared->dim_p_progress_1 * (j - 1) + shared->dim_p_progress_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + shared->progress_rate > shared->tol ? shared->progress_rate / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_regress_1; ++i) {
@@ -1569,19 +1573,19 @@ public:
     for (int i = 1; i <= shared->dim_p_selfcr_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_selfcr_SC_2; ++j) {
         int k = 1;
-        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + shared->slfcr_rate[0] + shared->progress_rate > shared->tol ? shared->slfcr_rate[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + shared->slfcr_rate[0] + shared->progress_rate) : 0);
+        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + shared->slfcr_rate_SC[0] + shared->progress_rate > shared->tol ? shared->slfcr_rate_SC[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + shared->slfcr_rate_SC[0] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_selfcr_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_selfcr_SC_2; ++j) {
         int k = 2;
-        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + shared->slfcr_rate[1] + shared->progress_rate > shared->tol ? shared->slfcr_rate[1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + shared->slfcr_rate[1] + shared->progress_rate) : 0);
+        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + shared->slfcr_rate_SC[1] + shared->progress_rate > shared->tol ? shared->slfcr_rate_SC[1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + shared->slfcr_rate_SC[1] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_selfcr_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_selfcr_SC_2; ++j) {
         int k = 3;
-        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + shared->slfcr_rate[2] + shared->progress_rate > shared->tol ? shared->slfcr_rate[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + shared->slfcr_rate[2] + shared->progress_rate) : 0);
+        internal.p_selfcr_SC[i - 1 + shared->dim_p_selfcr_SC_1 * (j - 1) + shared->dim_p_selfcr_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + shared->slfcr_rate_SC[2] + shared->progress_rate > shared->tol ? shared->slfcr_rate_SC[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + shared->slfcr_rate_SC[2] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_stabilise_1; ++i) {
@@ -1623,19 +1627,19 @@ public:
     for (int i = 1; i <= shared->dim_p_TBdeaths_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_TBdeaths_SC_2; ++j) {
         int k = 1;
-        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] > shared->tol ? shared->TBd_rate[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0]) : 0);
+        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] > shared->tol ? shared->TBd_rate_SC[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_TBdeaths_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_TBdeaths_SC_2; ++j) {
         int k = 2;
-        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] > shared->tol ? shared->TBd_rate[1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1]) : 0);
+        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] > shared->tol ? shared->TBd_rate_SC[1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_TBdeaths_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_TBdeaths_SC_2; ++j) {
         int k = 3;
-        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] > shared->tol ? shared->TBd_rate[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2]) : 0);
+        internal.p_TBdeaths_SC[i - 1 + shared->dim_p_TBdeaths_SC_1 * (j - 1) + shared->dim_p_TBdeaths_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] > shared->tol ? shared->TBd_rate_SC[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_TrHIV_1; ++i) {
@@ -1907,19 +1911,19 @@ public:
     for (int i = 1; i <= shared->dim_p_detect_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_detect_SC_2; ++j) {
         int k = 1;
-        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate[0] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate[0] + shared->progress_rate) : 0);
+        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate_SC[0] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate_SC[0] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_detect_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_detect_SC_2; ++j) {
         int k = 2;
-        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate[1] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate[1] + shared->progress_rate) : 0);
+        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate_SC[1] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate_SC[1] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_detect_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_p_detect_SC_2; ++j) {
         int k = 3;
-        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate[2] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate[2] + shared->progress_rate) : 0);
+        internal.p_detect_SC[i - 1 + shared->dim_p_detect_SC_1 * (j - 1) + shared->dim_p_detect_SC_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate_SC[2] + shared->progress_rate > shared->tol ? internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate_SC[2] + shared->progress_rate) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_DHIV_1; ++i) {
@@ -1950,13 +1954,13 @@ public:
     for (int i = 1; i <= shared->dim_p_SCHIV_1; ++i) {
       for (int j = 1; j <= shared->dim_p_SCHIV_2; ++j) {
         int k = 1;
-        internal.p_SCHIV[i - 1 + shared->dim_p_SCHIV_1 * (j - 1) + shared->dim_p_SCHIV_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate[0] + shared->progress_rate + internal.HIV_rate_yr[j - 1] > shared->tol ? internal.HIV_rate_yr[j - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate[0] + shared->progress_rate + internal.HIV_rate_yr[j - 1]) : 0);
+        internal.p_SCHIV[i - 1 + shared->dim_p_SCHIV_1 * (j - 1) + shared->dim_p_SCHIV_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate_SC[0] + shared->progress_rate + internal.HIV_rate_yr[j - 1] > shared->tol ? internal.HIV_rate_yr[j - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate_SC[0] + shared->progress_rate + internal.HIV_rate_yr[j - 1]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_SCHIV_1; ++i) {
       for (int j = 1; j <= shared->dim_p_SCHIV_2; ++j) {
         int k = 2;
-        internal.p_SCHIV[i - 1 + shared->dim_p_SCHIV_1 * (j - 1) + shared->dim_p_SCHIV_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate[1] + shared->progress_rate + internal.ART_rate_yr[j - 1] > shared->tol ? internal.ART_rate_yr[j - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate[1] + shared->progress_rate + internal.ART_rate_yr[j - 1]) : 0);
+        internal.p_SCHIV[i - 1 + shared->dim_p_SCHIV_1 * (j - 1) + shared->dim_p_SCHIV_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate_SC[1] + shared->progress_rate + internal.ART_rate_yr[j - 1] > shared->tol ? internal.ART_rate_yr[j - 1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate_SC[1] + shared->progress_rate + internal.ART_rate_yr[j - 1]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_SCHIV_1; ++i) {
@@ -1993,19 +1997,19 @@ public:
     for (int i = 1; i <= shared->dim_rate_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_rate_SC_2; ++j) {
         int k = 1;
-        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate[0] + shared->progress_rate + shared->age_rate[j - 1] + internal.HIV_rate_yr[j - 1];
+        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_noHIV_t[j - 1] + shared->TBd_rate_SC[0] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 0 + i - 1] + shared->slfcr_rate_SC[0] + shared->progress_rate + shared->age_rate[j - 1] + internal.HIV_rate_yr[j - 1];
       }
     }
     for (int i = 1; i <= shared->dim_rate_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_rate_SC_2; ++j) {
         int k = 2;
-        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate[1] + shared->progress_rate + shared->age_rate[j - 1] + internal.ART_rate_yr[j - 1];
+        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->TBd_rate_SC[1] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 1 + i - 1] + shared->slfcr_rate_SC[1] + shared->progress_rate + shared->age_rate[j - 1] + internal.ART_rate_yr[j - 1];
       }
     }
     for (int i = 1; i <= shared->dim_rate_SC_1; ++i) {
       for (int j = 1; j <= shared->dim_rate_SC_2; ++j) {
         int k = 3;
-        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate[2] + shared->progress_rate + shared->age_rate[j - 1];
+        internal.rate_SC[i - 1 + shared->dim_rate_SC_1 * (j - 1) + shared->dim_rate_SC_12 * (k - 1)] = internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->TBd_rate_SC[2] + internal.dtct_rate_SCm[shared->dim_dtct_rate_SCm_1 * 2 + i - 1] + shared->slfcr_rate_SC[2] + shared->progress_rate + shared->age_rate[j - 1];
       }
     }
     for (int i = 1; i <= shared->dim_Sij_1; ++i) {
@@ -3415,7 +3419,9 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dim_dtct_rate = 3;
   shared->dim_dtct_rate_SC = 3;
   shared->dim_slfcr_rate = 3;
+  shared->dim_slfcr_rate_SC = 3;
   shared->dim_TBd_rate = 3;
+  shared->dim_TBd_rate_SC = 3;
   shared->dim_zk = 6;
   shared->initial_tot_incidence = 0;
   shared->mxp = 1000000;
@@ -3424,7 +3430,9 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->dtct_rate = std::vector<real_type>(shared->dim_dtct_rate);
   shared->dtct_rate_SC = std::vector<real_type>(shared->dim_dtct_rate_SC);
   shared->slfcr_rate = std::vector<real_type>(shared->dim_slfcr_rate);
+  shared->slfcr_rate_SC = std::vector<real_type>(shared->dim_slfcr_rate_SC);
   shared->TBd_rate = std::vector<real_type>(shared->dim_TBd_rate);
+  shared->TBd_rate_SC = std::vector<real_type>(shared->dim_TBd_rate_SC);
   shared->zk = std::vector<real_type>(shared->dim_zk);
   shared->age_dims = NA_INTEGER;
   shared->ari0 = NA_REAL;
@@ -4535,11 +4543,23 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   {
      int i = 2;
-     shared->slfcr_rate[i - 1] = 0;
+     shared->slfcr_rate[i - 1] = shared->HIV_dur_ratio * (1 - shared->cfr) / (real_type) shared->dur;
   }
   {
      int i = 3;
      shared->slfcr_rate[i - 1] = (1 - shared->cfr) / (real_type) shared->dur;
+  }
+  {
+     int i = 1;
+     shared->slfcr_rate_SC[i - 1] = 0 * (1 - shared->cfr) / (real_type) shared->dur;
+  }
+  {
+     int i = 2;
+     shared->slfcr_rate_SC[i - 1] = 0 * shared->HIV_dur_ratio * (1 - shared->cfr) / (real_type) shared->dur;
+  }
+  {
+     int i = 3;
+     shared->slfcr_rate_SC[i - 1] = 0 * (1 - shared->cfr) / (real_type) shared->dur;
   }
   shared->TB_HIV_mod = user_get_array_fixed<real_type, 1>(user, "TB_HIV_mod", shared->TB_HIV_mod, {shared->dim_TB_HIV_mod}, NA_REAL, NA_REAL);
   {
@@ -4553,6 +4573,18 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   {
      int i = 3;
      shared->TBd_rate[i - 1] = shared->cfr / (real_type) shared->dur;
+  }
+  {
+     int i = 1;
+     shared->TBd_rate_SC[i - 1] = 0 * shared->cfr / (real_type) shared->dur;
+  }
+  {
+     int i = 2;
+     shared->TBd_rate_SC[i - 1] = 0 * shared->HIV_dur_ratio * shared->cfr / (real_type) shared->dur;
+  }
+  {
+     int i = 3;
+     shared->TBd_rate_SC[i - 1] = 0 * shared->cfr / (real_type) shared->dur;
   }
   shared->tt = user_get_array_fixed<real_type, 1>(user, "tt", shared->tt, {shared->dim_tt}, NA_REAL, NA_REAL);
   shared->ACFhaz0 = user_get_array_fixed<real_type, 2>(user, "ACFhaz0", shared->ACFhaz0, {shared->dim_ACFhaz0_1, shared->dim_ACFhaz0_2}, NA_REAL, NA_REAL);
