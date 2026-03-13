@@ -10,6 +10,10 @@
 ##' @param hivoffset How many years ahead is Blantyre HIV incidence than MWI?
 ##' @param hivfac HIV incidence in Blantyre relative to MWI
 ##' @param hivdecline HIV decline rate from peak: overrides if >0
+##' @param hiv_init_override if >0 provides initial HIV prevalence
+##' @param ART_haz provides an ART initiation hazard
+##' @param ART_init_override if >0 provides initial ART prevalence
+##' @param hiv_checking if TRUE, prints HIV-related parameters and plots HIV incidence and ART initiation over time
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -21,7 +25,11 @@ get.parms <- function(start_year,
                       ari0,
                       hivoffset = 0,
                       hivfac = 2,
-                      hivdecline = 0) {
+                      hivdecline = 0,
+                      hiv_init_override = -1,
+                      ART_haz = 0.5,
+                      ART_init_override = -1,
+                      hiv_checking = FALSE) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -55,18 +63,21 @@ get.parms <- function(start_year,
   age.frax <- age.frax / sum(age.frax)
 
   ## Get correct years for HIV
-  hiv_series <- BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est
+  hiv_series <- data.table::data.table(
+    hinc = BLASTtbmod::HIV_inc_1990_2021$Adult_incidence_1000_uninfected_est,
+    year = BLASTtbmod::HIV_inc_1990_2021$Year
+  )
   ## if hivdecline > 0, use a decline rate from the peak
   if (hivdecline > 0) {
-    peakloc <- which.max(hiv_series)
-    afterpeak <- peakloc:length(hiv_series)
+    peakloc <- which.max(hiv_series$hinc)
+    afterpeak <- peakloc:nrow(hiv_series)
     declinefac <- exp(-hivdecline * (afterpeak - peakloc))
-    hiv_series[afterpeak] <- hiv_series[peakloc] * declinefac
+    hiv_series$hinc[afterpeak] <- hiv_series$hinc[peakloc] * declinefac
   }
   offset <- hivoffset
   log_hinc <- Hmisc::approxExtrap(
-    x = BLASTtbmod::HIV_inc_1990_2021$Year,
-    y = log(hiv_series),
+    x = hiv_series$year,
+    y = log(hiv_series$hinc),
     xout = (start_year + offset):(offset + start_year + years),
     method = "linear",
     rule = 2
@@ -81,7 +92,7 @@ get.parms <- function(start_year,
 
   ## Time varying ART initiation - interpolate
   ## ART_int <- approx(BLASTtbmod::HIV_inc_1990_2021$ART_inc_est, n = sim_length)$y
-  ART_int <- rep(0.25, sim_length)
+  ART_int <- rep(ART_haz, sim_length)
 
   ## Risk-modifiers for TB based on HIV status
   TB_HIV_mod <- c(1, 1, 1) # infection by HIV
@@ -139,14 +150,33 @@ get.parms <- function(start_year,
     stop("Need start year in HIV prevalence data range!")
   }
 
-  artp <- BLASTtbmod::hivp_mwi[
-    Period == start_year & variable == "ARTpc", value
-  ]
+  if (ART_init_override >= 0) {
+    artp <- ART_init_override
+  } else {
+    artp <- BLASTtbmod::hivp_mwi[
+      Period == start_year & variable == "ARTpc", value
+    ]
+  }
+
+  ## NOTE these HIV prevalences are in 2015
+  ## if using different start years:
+  ## adjust by corresponding HIV incidence relative to 2015
+  if (hiv_init_override < 0) { # left as default
+    adj_factor <- HIV_int[which(hiv_series$year == start_year)] /
+      HIV_int[which(hiv_series$year == 2015)]
+    hiv_init <- adj_factor * BLASTtbmod::blantyre$hivpre
+  } else {
+    ## use override but keep relative levels across patches
+    hiv_init <- hiv_init_override *
+      BLASTtbmod::blantyre$hivpre / mean(BLASTtbmod::blantyre$hivpre)
+  }
+
+
 
   ## 15-49 & oldies
   for (j in 2:3) {
-    propinit_hiv[, j, 2] <- BLASTtbmod::blantyre$hivpre * (1 - artp)
-    propinit_hiv[, j, 3] <- BLASTtbmod::blantyre$hivpre * artp
+    propinit_hiv[, j, 2] <- hiv_init * (1 - artp)
+    propinit_hiv[, j, 3] <- hiv_init * artp
   }
   ## complete HIV-
   for (j in 1:7) { # patch
@@ -155,6 +185,14 @@ get.parms <- function(start_year,
     }
   }
 
+  if (hiv_checking) {
+    print(hiv_init)
+    print(artp)
+    print(range(HIV_int)) # NOTE per 1000 in stocm.R
+    print(range(ART_int))
+    plot(HIV_int, col = 2, ylim = c(0, 1.1 * max(HIV_int, ART_int)))
+    points(ART_int, col = 3)
+  }
   ## Set up list to pass to model
   parms <- list(
     dt = dt,
@@ -205,6 +243,3 @@ get.parms <- function(start_year,
   )
   return(parms)
 }
-
-
-

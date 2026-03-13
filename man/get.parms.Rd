@@ -11,7 +11,11 @@ get.parms(
   ari0,
   hivoffset = 0,
   hivfac = 2,
-  hivdecline = 0
+  hivdecline = 0,
+  hiv_init_override = -1,
+  ART_haz = 0.5,
+  ART_init_override = -1,
+  hiv_checking = FALSE
 )
 }
 \arguments{
@@ -28,6 +32,14 @@ get.parms(
 \item{hivfac}{HIV incidence in Blantyre relative to MWI}
 
 \item{hivdecline}{HIV decline rate from peak: overrides if >0}
+
+\item{hiv_init_override}{if >0 provides initial HIV prevalence}
+
+\item{ART_haz}{provides an ART initiation hazard}
+
+\item{ART_init_override}{if >0 provides initial ART prevalence}
+
+\item{hiv_checking}{if TRUE, prints HIV-related parameters and plots HIV incidence and ART initiation over time}
 }
 \value{
 list
