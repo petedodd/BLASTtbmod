@@ -214,10 +214,12 @@ plot_compare_noterate_agrgt <- function(Y,
   by = .(t, patch)
   ]
   aggD <- aggD[t > 1]
+  aggD[, yr := t / 12 + start_year]
   real_dat = BLASTtbmod::md7
   real_dat[["patch"]] <- paste("Patch", md7$comid)
 
-  p <- ggplot2::ggplot(aggD, aes(t / 12 + start_year, y = mid, ymin = lo, ymax = hi)) +
+  p <- ggplot2::ggplot(aggD,
+                       aes(yr, y = mid, ymin = lo, ymax = hi)) +
     ggplot2::geom_ribbon(alpha = 0.3) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~patch) +
