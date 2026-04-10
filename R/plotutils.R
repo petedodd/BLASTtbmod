@@ -229,7 +229,12 @@ plot_compare_noterate_agrgt <- function(Y,
     ggplot2::theme_light() +
     ggplot2::expand_limits(y = c(0, NA))
   if (realdata) {
-    p <- p + ggplot2::geom_point(data = real_dat, col = 2, shape = 1)
+    p <- p + ggplot2::geom_point(
+      data = real_dat,
+      aes(x = t / 12 + 2015),
+      col = 2,
+      shape = 1
+    )
   }
   print(p)
 }

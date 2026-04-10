@@ -40,7 +40,7 @@ get.parms <- function(start_year,
   offsetPops <- rep(1, patch_dims)
 
   ## birthrates
-  birthrate_dat <- merge(
+  birthrate_dat <- data.table::merge.data.table(
     BLASTtbmod::MWI$B[
       Year %in% start_year:(start_year + years),
       list(Year, Births)
@@ -200,7 +200,7 @@ get.parms <- function(start_year,
     Pi = pi,
     epsi = 0, # seasonality
     sim_length = sim_length,
-    popinit = as.numeric(BLASTtbmod::blantyre$population),
+    popinit = as.numeric(BLASTtbmod::blantyre$population), #2015
     patch_dims = patch_dims,
     HIV_dims = HIV_dims,
     age_dims = age_dims,
@@ -242,4 +242,83 @@ get.parms <- function(start_year,
     ACFhaz1 = matrix(0.0, nrow = patch_dims, ncol = sim_length) # symp ACF haz
   )
   return(parms)
+}
+
+
+
+
+##' Update parameters for given step using results of previous runs
+##'
+##' TODO
+##'
+##' @title Restart parameters at given step
+##' @param parms Parameter list from previous runs, see 'get.parms()'
+##' @param restart_step Step to restart at, in same units as 'tt' in parms
+##' @param end_state Output from previous runs, in same format as output of 'stocm()' - should contain all timesteps up to and including restart_step
+##' @return Updated parameter list with initial conditions and time-varying parameters updated to restart at given step
+##' @author Pete Dodd
+##' @export
+##' @import data.table
+restart_parms <- function(parms, restart_step, end_state) {
+  cat("Creating new parameters to restart at given step...\n")
+  ## gather snapshots for restart
+  cat("Summarising end state...\n")
+  denom <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "N")
+  numer <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "D")
+  hnumr <- denom[t == restart_step,
+    .(N = sum(N)),
+    by = .(patch, age, hiv, particle = chain_step)
+  ]
+  denom <- denom[t == restart_step,
+    .(N = sum(N)),
+    by = .(patch, age, particle = chain_step)
+  ]
+  numer <- numer[t == restart_step,
+    .(D = sum(D)),
+    by = .(patch, age, particle = chain_step)
+  ]
+
+  ## TB prevalence by patch and age
+  both <- data.table::merge.data.table(
+    denom, numer,
+    by = c("patch", "age", "particle")
+  )
+  boths <- both[, .(prev = mean(D / N)), by = .(patch, age)]
+  D00 <- data.table::dcast(boths, patch ~ age, value.var = "prev")
+  D00 <- as.matrix(D00[, -1])
+
+  ## HIV state
+  hnumr[, tot := sum(N), by = .(patch, age, particle)]
+  hnumr[, p := N / tot]
+  hnumr <- hnumr[, .(p = mean(p)), by = .(patch, age, hiv)]
+  H00 <- array(hnumr[order(hiv, age, patch)]$p,
+    c(7, 3, 3),
+    dimnames = list(
+      patch = unique(hnumr$patch),
+      age = unique(hnumr$age),
+      hiv = unique(hnumr$hiv)
+    )
+  )
+
+  cat("Updating parameter object...\n")
+  ## rejig args:
+  newparms <- parms
+  newparms$initD <- D00
+  newparms$propinit_hiv <- H00
+  ## timed items:
+  keep <- restart_step:length(parms$tt)
+  newparms$tt <- newparms$tt[keep]
+  newparms$tt <- newparms$tt - newparms$tt[1] # reset time to 0 at restart
+  newparms$sim_length <- length(newparms$tt)
+  newparms$births_int <- newparms$births_int[keep]
+  newparms$HIV_int <- newparms$HIV_int[keep]
+  newparms$ART_int <- newparms$ART_int[keep]
+  newparms$mu_noHIV_int <- newparms$mu_noHIV_int[, keep]
+  newparms$mu_HIV_int <- newparms$mu_HIV_int[, keep]
+  newparms$mu_ART_int <- newparms$mu_ART_int[, keep]
+  newparms$m_in_int <- newparms$m_in_int[, keep]
+  newparms$ACFhaz0 <- newparms$ACFhaz0[, keep]
+  newparms$ACFhaz1 <- newparms$ACFhaz1[, keep]
+
+  return(newparms)
 }
