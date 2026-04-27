@@ -2133,13 +2133,13 @@ public:
     for (int i = 1; i <= shared->dim_p_Rinfs_1; ++i) {
       for (int j = 1; j <= shared->dim_p_Rinfs_2; ++j) {
         int k = 2;
-        internal.p_Rinfs[i - 1 + shared->dim_p_Rinfs_1 * (j - 1) + shared->dim_p_Rinfs_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[1] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[1] > shared->tol ? shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[1] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[1]) : 0);
+        internal.p_Rinfs[i - 1 + shared->dim_p_Rinfs_1 * (j - 1) + shared->dim_p_Rinfs_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[1] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[1] > shared->tol ? shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[1] / (real_type) (internal.m_in_t[j - 1] + internal.mu_HIV_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[1] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[1]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_Rinfs_1; ++i) {
       for (int j = 1; j <= shared->dim_p_Rinfs_2; ++j) {
         int k = 3;
-        internal.p_Rinfs[i - 1 + shared->dim_p_Rinfs_1 * (j - 1) + shared->dim_p_Rinfs_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[2] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[2] > shared->tol ? shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[0] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[2] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[2]) : 0);
+        internal.p_Rinfs[i - 1 + shared->dim_p_Rinfs_1 * (j - 1) + shared->dim_p_Rinfs_12 * (k - 1)] = (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[2] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[2] > shared->tol ? shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[2] / (real_type) (internal.m_in_t[j - 1] + internal.mu_ART_t[j - 1] + shared->v * internal.foi[i - 1] * shared->TB_HIV_mod[2] + shared->pDr * shared->IRR[i - 1] * shared->Hirr[2]) : 0);
       }
     }
     for (int i = 1; i <= shared->dim_p_SCage_1; ++i) {
@@ -3434,6 +3434,18 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   shared->TBd_rate = std::vector<real_type>(shared->dim_TBd_rate);
   shared->TBd_rate_SC = std::vector<real_type>(shared->dim_TBd_rate_SC);
   shared->zk = std::vector<real_type>(shared->dim_zk);
+  {
+     int i = 1;
+     shared->slfcr_rate_SC[i - 1] = 0;
+  }
+  {
+     int i = 2;
+     shared->slfcr_rate_SC[i - 1] = 0;
+  }
+  {
+     int i = 3;
+     shared->slfcr_rate_SC[i - 1] = 0;
+  }
   shared->age_dims = NA_INTEGER;
   shared->ari0 = NA_REAL;
   shared->ART_det_OR = NA_REAL;
@@ -4549,18 +4561,6 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
      int i = 3;
      shared->slfcr_rate[i - 1] = (1 - shared->cfr) / (real_type) shared->dur;
   }
-  {
-     int i = 1;
-     shared->slfcr_rate_SC[i - 1] = 0 * (1 - shared->cfr) / (real_type) shared->dur;
-  }
-  {
-     int i = 2;
-     shared->slfcr_rate_SC[i - 1] = 0 * shared->HIV_dur_ratio * (1 - shared->cfr) / (real_type) shared->dur;
-  }
-  {
-     int i = 3;
-     shared->slfcr_rate_SC[i - 1] = 0 * (1 - shared->cfr) / (real_type) shared->dur;
-  }
   shared->TB_HIV_mod = user_get_array_fixed<real_type, 1>(user, "TB_HIV_mod", shared->TB_HIV_mod, {shared->dim_TB_HIV_mod}, NA_REAL, NA_REAL);
   {
      int i = 1;
@@ -4576,15 +4576,15 @@ dust::pars_type<stocm> dust_pars<stocm>(cpp11::list user) {
   }
   {
      int i = 1;
-     shared->TBd_rate_SC[i - 1] = 0 * shared->cfr / (real_type) shared->dur;
+     shared->TBd_rate_SC[i - 1] = shared->Trxd_rate;
   }
   {
      int i = 2;
-     shared->TBd_rate_SC[i - 1] = 0 * shared->HIV_dur_ratio * shared->cfr / (real_type) shared->dur;
+     shared->TBd_rate_SC[i - 1] = shared->Trxd_rate;
   }
   {
      int i = 3;
-     shared->TBd_rate_SC[i - 1] = 0 * shared->cfr / (real_type) shared->dur;
+     shared->TBd_rate_SC[i - 1] = shared->Trxd_rate;
   }
   shared->tt = user_get_array_fixed<real_type, 1>(user, "tt", shared->tt, {shared->dim_tt}, NA_REAL, NA_REAL);
   shared->ACFhaz0 = user_get_array_fixed<real_type, 2>(user, "ACFhaz0", shared->ACFhaz0, {shared->dim_ACFhaz0_1, shared->dim_ACFhaz0_2}, NA_REAL, NA_REAL);

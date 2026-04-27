@@ -128,13 +128,15 @@ slfcr_rate[3] <- (1 - cfr) / dur # Selfcure rate
 ## outcomes for subclinical disease
 dim(TBd_rate_SC) <- 3 # HIV_dims
 dim(slfcr_rate_SC) <- 3 # HIV_dims
-TBd_rate_SC[1] <- 0*cfr / dur # TB death rate
-slfcr_rate_SC[1] <- 0*(1 - cfr) / dur # Selfcure rate
-TBd_rate_SC[2] <- 0*HIV_dur_ratio * cfr / dur # TB death rate
-slfcr_rate_SC[2] <- 0*HIV_dur_ratio * (1 - cfr) / dur # no self-cure
-## slfcr_rate[2] <- 0.0 # no self-cure
-TBd_rate_SC[3] <- 0*cfr / dur # TB death rate
-slfcr_rate_SC[3] <- 0*(1 - cfr) / dur # Selfcure rate
+## deaths rates in SC TB set to those on TB treatment
+## add hoc but ensures no counterfactual mortality change from ACF
+TBd_rate_SC[1] <- Trxd_rate # TB death rate (see below)
+slfcr_rate_SC[1] <- 0  # Selfcure rate
+TBd_rate_SC[2] <- Trxd_rate # TB death rate
+slfcr_rate_SC[2] <- 0  # no self-cure
+TBd_rate_SC[3] <- Trxd_rate # TB death rate
+slfcr_rate_SC[3] <- 0 # Selfcure rate
+
 
 ## Detection rates
 dim(dtct_rate) <- 3 # HIV_dims
@@ -1166,8 +1168,8 @@ NeventsR2[,,] <- NeventsR1[i,j,k] - HIV_out_R[i,j,k] #update
 
 ## c) REINFECTION
 p_Rinfs[, , 1] <- if (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i] * Hirr[1] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_noHIV_t[j] + v * foi[i] * TB_HIV_mod[1] + pDr * IRR[i]* Hirr[1]) else 0
-p_Rinfs[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2]) else 0
-p_Rinfs[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3] > tol) v * foi[i] * TB_HIV_mod[1] / (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3]) else 0
+p_Rinfs[, , 2] <- if (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2] > tol) v * foi[i] * TB_HIV_mod[2] / (m_in_t[j] + mu_HIV_t[j] + v * foi[i] * TB_HIV_mod[2] + pDr * IRR[i] * Hirr[2]) else 0
+p_Rinfs[, , 3] <- if (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3] > tol) v * foi[i] * TB_HIV_mod[3] / (m_in_t[j] + mu_ART_t[j] + v * foi[i] * TB_HIV_mod[3] + pDr * IRR[i] * Hirr[3]) else 0
 Rinfs[, , ] <- if(p_Rinfs[i, j, k] >0 && NeventsR2[i, j, k]>0) rbinom(NeventsR2[i, j, k],p_Rinfs[i, j, k]) else 0
 NeventsR3[,,] <- NeventsR2[i,j,k] - Rinfs[i,j,k] #update
 
