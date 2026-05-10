@@ -7,11 +7,11 @@
 case_compare7(state, observed, pars = NULL)
 }
 \arguments{
-\item{state}{}
+\item{state}{state from model}
 
-\item{observed}{}
+\item{observed}{observed data}
 
-\item{pars}{}
+\item{pars}{potential additional parameters}
 }
 \value{
 real

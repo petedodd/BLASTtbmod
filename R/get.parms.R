@@ -146,7 +146,7 @@ get.parms <- function(start_year,
     HIV_dims
   ))
 
-  if (!start_year %in% hivp_mwi$Period) {
+  if (!start_year %in% BLASTtbmod::hivp_mwi$Period) {
     stop("Need start year in HIV prevalence data range!")
   }
 

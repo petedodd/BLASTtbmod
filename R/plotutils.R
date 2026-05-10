@@ -236,7 +236,7 @@ plot_compare_noterate_agrgt <- function(Y,
       shape = 1
     )
   }
-  print(p)
+  p
 }
 
 

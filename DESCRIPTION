@@ -4,7 +4,6 @@ Encoding: UTF-8
 LinkingTo: 
     cpp11,
     dust
-RoxygenNote: 7.3.3
 Depends: 
     R (>= 3.5)
 LazyData: true
@@ -15,3 +14,4 @@ Imports:
     Hmisc,
     magrittr,
     mcstate
+Config/roxygen2/version: 8.0.0

@@ -7,13 +7,13 @@
 run.model(parm, times, n.particles = 1, convert = FALSE)
 }
 \arguments{
-\item{parm}{}
+\item{parm}{input list of arguments}
 
-\item{times}{}
+\item{times}{vector of times to run over (from 1)}
 
-\item{n.particles}{}
+\item{n.particles}{number of particles to run}
 
-\item{convert}{}
+\item{convert}{whether to try to convert to named data.frame (do not use!)}
 }
 \value{
 array
