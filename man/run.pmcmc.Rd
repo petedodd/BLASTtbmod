@@ -14,6 +14,7 @@ run.pmcmc(
   n.chains,
   n.threads = 4,
   n.epochs = 1,
+  n.workers = 1,
   save_restart = NULL,
   transform = NULL,
   mcmc_pars = NULL,
@@ -38,6 +39,8 @@ run.pmcmc(
 \item{n.threads}{number of threads to use (not tested)}
 
 \item{n.epochs}{number of times to re-run PMCMC updating the proposal matrix based on previous run}
+
+\item{n.workers}{number of workers - see mcstate}
 
 \item{save_restart}{where to save the restart}
 
