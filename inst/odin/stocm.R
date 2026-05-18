@@ -10,59 +10,66 @@ dt <- user()
 
 ##################################
 ## Set initial conditions
-ari0 <- user()
-popinit[] <- user()
-ageMids[] <- user()
-agefracs[] <- user()
-
-popinit_byage[, ] <- floor(popinit[i] * agefracs[j] / (sum(agefracs) + 1e-10)) # division just in case
+## ari0 <- user()
+popinit[,,,] <- user() #now full states
+## ageMids[] <- user()
 
 
-## TB initial state
-## Initial ratio of TBI to disease states
-initD[, ] <- user() # NOTE now taken as input: note mix of D,SC,Tr,R below
-initPrev[,] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2)             #non-LTBI=U
-initLL[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2)             #non-LTBI=U
-initF[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2)             #non-LTBI=U
+## ## TB initial state
+## ## Initial ratio of TBI to disease states
+## initD[, ] <- user() # NOTE now taken as input: note mix of D,SC,Tr,R below
+## initPrev[,] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2)             #non-LTBI=U
+## initLL[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2)             #non-LTBI=U
+## initF[, ] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2)             #non-LTBI=U
 
-## safety: should be 1
-initDenom[, ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
+## ## safety: should be 1
+## initDenom[, ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
 
-tbi_U[, ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
-tbi_LR[,] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
-tbi_LL[,] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0
-tbi_D[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-tbi_SC[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-tbi_Tr[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
+## tbi_U[, ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
+## tbi_LR[,] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
+## tbi_LL[,] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0
+## tbi_D[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+## tbi_SC[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+## tbi_Tr[,] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+## tbi_R[,] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
 
-init_U[, ] <- round(popinit_byage[i, j] * tbi_U[i, j])
-init_LR[,] <- round(popinit_byage[i,j] * tbi_LR[i,j])
-init_LL[,] <- round(popinit_byage[i,j] * tbi_LL[i,j])
-init_D[,] <- round(popinit_byage[i,j] * tbi_D[i,j])
-init_SC[,] <- round(popinit_byage[i,j] * tbi_SC[i,j])
-init_Tr[,] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
-init_R[,] <- round(popinit_byage[i,j] * tbi_R[i,j])
+## init_U[, ] <- round(popinit_byage[i, j] * tbi_U[i, j])
+## init_LR[,] <- round(popinit_byage[i,j] * tbi_LR[i,j])
+## init_LL[,] <- round(popinit_byage[i,j] * tbi_LL[i,j])
+## init_D[,] <- round(popinit_byage[i,j] * tbi_D[i,j])
+## init_SC[,] <- round(popinit_byage[i,j] * tbi_SC[i,j])
+## init_Tr[,] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
+## init_R[,] <- round(popinit_byage[i,j] * tbi_R[i,j])
 
-## initial proportions by HIV
-dim(propinit_hiv) <- c(patch_dims, age_dims, HIV_dims)
-dim(dpropinit_hiv) <- c(patch_dims, age_dims, HIV_dims) #for disease
-propinit_hiv[, , ] <- user()
-dpropinit_hiv[, , ] <- propinit_hiv[i, j, k] * Hirr[k]
-dpropinit_hiv[, , 2] <- dpropinit_hiv[i, j, 2] / HIV_dur_ratio
-dpropinit_hiv[, , 1] <- if(1 - sum(dpropinit_hiv[i, j, 2:3])>0) 1 - sum(dpropinit_hiv[i, j, 2:3]) else 0
+## ## initial proportions by HIV
+## dim(propinit_hiv) <- c(patch_dims, age_dims, HIV_dims)
+## dim(dpropinit_hiv) <- c(patch_dims, age_dims, HIV_dims) #for disease
+## propinit_hiv[, , ] <- user()
+## dpropinit_hiv[, , ] <- propinit_hiv[i, j, k] * Hirr[k]
+## dpropinit_hiv[, , 2] <- dpropinit_hiv[i, j, 2] / HIV_dur_ratio
+## dpropinit_hiv[, , 1] <- if(1 - sum(dpropinit_hiv[i, j, 2:3])>0) 1 - sum(dpropinit_hiv[i, j, 2:3]) else 0
 
 
-initial(U[, , ]) <- floor(init_U[i, j] * propinit_hiv[i, j, k])
-initial(LR[, , ]) <- floor(init_LR[i, j] * propinit_hiv[i, j, k])
-initial(LL[, , ]) <- floor(init_LL[i, j] * propinit_hiv[i, j, k])
+## initial(U[, , ]) <- floor(init_U[i, j] * propinit_hiv[i, j, k])
+## initial(LR[, , ]) <- floor(init_LR[i, j] * propinit_hiv[i, j, k])
+## initial(LL[, , ]) <- floor(init_LL[i, j] * propinit_hiv[i, j, k])
 
-# # For now: Split initial population 80:20 clinical:subclinical
-initial(D[, , ]) <- floor(init_D[i, j] * dpropinit_hiv[i, j, k])
-initial(SC[, , ]) <- floor(init_SC[i, j] * dpropinit_hiv[i, j, k])
+## # # For now: Split initial population 80:20 clinical:subclinical
+## initial(D[, , ]) <- floor(init_D[i, j] * dpropinit_hiv[i, j, k])
+## initial(SC[, , ]) <- floor(init_SC[i, j] * dpropinit_hiv[i, j, k])
 
-initial(Tr[, , ]) <- floor(init_Tr[i, j] * propinit_hiv[i, j, k])
-initial(R[, , ]) <- floor(init_R[i, j] * propinit_hiv[i, j, k])
+## initial(Tr[, , ]) <- floor(init_Tr[i, j] * propinit_hiv[i, j, k])
+## initial(R[, , ]) <- floor(init_R[i, j] * propinit_hiv[i, j, k])
+
+
+## initial states from read in
+initial(U[, , ]) <- popinit[1, i, j, k]
+initial(LR[, , ]) <- popinit[2, i, j, k]
+initial(LL[, , ]) <- popinit[3, i, j, k]
+initial(D[, , ]) <- popinit[4, i, j, k]
+initial(SC[, , ]) <- popinit[5, i, j, k]
+initial(Tr[, , ]) <- popinit[6, i, j, k]
+initial(R[, , ]) <- popinit[7, i, j, k]
 
 
 
@@ -70,8 +77,7 @@ initial(R[, , ]) <- floor(init_R[i, j] * propinit_hiv[i, j, k])
 # Initial conditions for vars that were previously output,
 # now update for compatibility with odin.dust
 
-initial(N[,,]) <- floor((init_U[i,j] + init_LR[i,j] + init_LL[i,j] +
-  init_D[i,j] + init_SC[i,j] + init_Tr[i,j] + init_R[i,j]) * propinit_hiv[i, j, k])
+initial(N[,,]) <- popinit[1, i, j, k] + popinit[2, i, j, k] + popinit[3, i, j, k] + popinit[4, i, j, k] + popinit[5, i, j, k] + popinit[6, i, j, k] + popinit[7, i, j, k]
 
 # Not sure how to set initial vals for these as they depend on
 # dynamics. 0 for now:
@@ -188,7 +194,7 @@ ART_rate_yr[1] <- 0
 ART_rate_yr[2:3] <- ART_t
 
 ## TB IRR placeholder
-TB_HIV_mod[] <- user() #NOTE this is applied as 
+TB_HIV_mod[] <- user() #NOTE this is applied as
 Hirr[] <- user()       #NOTE IRR applied to progression
 
 # Assign background mortality
@@ -324,7 +330,7 @@ dim(NeventsR5) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to U compartment (uninfected)
 dim( U ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_U ) <- c( patch_dims, age_dims )
+## dim( init_U ) <- c( patch_dims, age_dims )
 dim( Udeaths) <- c( patch_dims, age_dims, HIV_dims )
 dim( Uinfs) <- c( patch_dims, age_dims, HIV_dims )
 ## dim( m_in_U ) <- c( patch_dims, age_dims, HIV_dims )
@@ -341,7 +347,7 @@ dim( p_UHIV ) <- c( patch_dims, age_dims, HIV_dims )
 
 # ## Dims relating to LR compartment (infected early)
 dim( LR ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_LR ) <- c( patch_dims, age_dims )
+## dim( init_LR ) <- c( patch_dims, age_dims )
 ## dim( m_in_LR ) <- c( patch_dims, age_dims, HIV_dims )
 dim( LRdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( progFast ) <- c( patch_dims, age_dims, HIV_dims )
@@ -358,8 +364,8 @@ dim( HIV_out_LR ) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to LL compartment (infected late)
 dim( LL ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_LL ) <- c( patch_dims, age_dims )
-dim( initLL ) <- c( patch_dims, age_dims ) #this one is probs
+## dim( init_LL ) <- c( patch_dims, age_dims )
+## dim( initLL ) <- c( patch_dims, age_dims ) #this one is probs
 dim( rate_LL ) <- c( patch_dims, age_dims, HIV_dims )
 dim( p_LLinfs ) <- c( patch_dims, age_dims, HIV_dims )
 dim( p_progSlow ) <- c( patch_dims, age_dims, HIV_dims )
@@ -375,7 +381,7 @@ dim( HIV_out_LL ) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to D compartment (active disease)
 dim( D ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_D ) <- c( patch_dims, age_dims )
+## dim( init_D ) <- c( patch_dims, age_dims )
 dim( Ddeaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( TBdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( detection ) <- c( patch_dims, age_dims, HIV_dims )
@@ -395,7 +401,7 @@ dim( p_TBdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to SC compartment (subclinical disease)
 dim( SC ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_SC ) <- c( patch_dims, age_dims )
+## dim( init_SC ) <- c( patch_dims, age_dims )
 dim( SCdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( TBdeaths_SC ) <- c( patch_dims, age_dims, HIV_dims )
 dim( detection_SC ) <- c( patch_dims, age_dims, HIV_dims )
@@ -417,7 +423,7 @@ dim( p_TBdeaths_SC ) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to Tr compartment (treated)
 dim( Tr ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_Tr ) <- c( patch_dims, age_dims )
+## dim( init_Tr ) <- c( patch_dims, age_dims )
 dim( Trdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( Trsuccess ) <- c( patch_dims, age_dims, HIV_dims )
 dim( Trxdeaths ) <- c( patch_dims, age_dims, HIV_dims )
@@ -434,7 +440,7 @@ dim( p_Trxdeaths ) <- c( patch_dims, age_dims, HIV_dims )
 
 ## Dims relating to R compartment (Recovered)
 dim( R ) <- c( patch_dims, age_dims, HIV_dims )
-dim( init_R ) <- c( patch_dims, age_dims )
+## dim( init_R ) <- c( patch_dims, age_dims )
 dim( rate_R ) <- c( patch_dims, age_dims, HIV_dims )
 dim( p_Rinfs ) <- c( patch_dims, age_dims, HIV_dims )
 dim( p_relapse ) <- c( patch_dims, age_dims, HIV_dims )
@@ -475,25 +481,26 @@ dim( bg_deaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( MM ) <- c( patch_dims, patch_dims )
 dim( foitemp ) <- c( patch_dims, patch_dims )
 dim( foi ) <- patch_dims
-dim(popinit) <- patch_dims
+## the first 7 is the number of states
+dim(popinit) <- c(7, patch_dims, age_dims, HIV_dims )
 dim(birthparm) <- patch_dims
 dim( IRR ) <- patch_dims
 dim( tt ) <- sim_length
-dim( popinit_byage ) <- c( patch_dims, age_dims )
-dim( initPrev ) <- c( patch_dims, age_dims )
-dim( initF ) <- c( patch_dims, age_dims )
-dim( initD ) <- c( patch_dims, age_dims )
-# dim( ari0 ) <- patch_dims
-dim( ageMids ) <- age_dims
-dim( agefracs ) <- age_dims
-dim(initDenom) <- c(patch_dims, age_dims)
-dim(tbi_U) <- c(patch_dims, age_dims)
-dim(tbi_LR) <- c( patch_dims, age_dims )
-dim(tbi_LL) <- c( patch_dims, age_dims )
-dim(tbi_D) <- c( patch_dims, age_dims )
-dim(tbi_SC) <- c( patch_dims, age_dims )
-dim(tbi_Tr) <- c( patch_dims, age_dims )
-dim(tbi_R) <- c( patch_dims, age_dims )
+## dim( popinit_byage ) <- c( patch_dims, age_dims )
+## dim( initPrev ) <- c( patch_dims, age_dims )
+## dim( initF ) <- c( patch_dims, age_dims )
+## dim( initD ) <- c( patch_dims, age_dims )
+## # dim( ari0 ) <- patch_dims
+## dim( ageMids ) <- age_dims
+## dim( agefracs ) <- age_dims
+## dim(initDenom) <- c(patch_dims, age_dims)
+## dim(tbi_U) <- c(patch_dims, age_dims)
+## dim(tbi_LR) <- c( patch_dims, age_dims )
+## dim(tbi_LL) <- c( patch_dims, age_dims )
+## dim(tbi_D) <- c( patch_dims, age_dims )
+## dim(tbi_SC) <- c( patch_dims, age_dims )
+## dim(tbi_Tr) <- c( patch_dims, age_dims )
+## dim(tbi_R) <- c( patch_dims, age_dims )
 
 ## ## patch level aggregate indicators
 ## dim(pnotifrate) <- c(patch_dims)

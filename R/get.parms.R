@@ -171,8 +171,6 @@ get.parms <- function(start_year,
       BLASTtbmod::blantyre$hivpre / mean(BLASTtbmod::blantyre$hivpre)
   }
 
-
-
   ## 15-49 & oldies
   for (j in 2:3) {
     propinit_hiv[, j, 2] <- hiv_init * (1 - artp)
@@ -180,10 +178,99 @@ get.parms <- function(start_year,
   }
   ## complete HIV-
   for (j in 1:7) { # patch
-    for (k in 1:3) { # zone
+    for (k in 1:3) {
       propinit_hiv[j, k, 1] <- 1 - sum(propinit_hiv[j, k, 2:3])
     }
   }
+
+  ## === new bit to build initial population outside
+  X0 <- array(0,
+              dim = c(7, patch_dims, age_dims, HIV_dims),
+              dimnames = list(
+                state = c("U", "LR", "LL", "D", "SC", "Tr", "R"),
+                patch = paste0("p", 1:patch_dims),
+                age = paste0("a", 1:age_dims),
+                hiv = c("hiv-", "hiv+ART-", "hiv+ART+")
+              )
+              )
+
+  ## dimensions/initializations for other quantities
+  popinit_byage <- X0[1,,,1]
+  initPrev <- X0[1,,,1]
+  initLL <- X0[1,,,1]
+  initF <- X0[1,,,1]
+  initDenom <- X0[1,,,1]
+  tbi_U <- X0[1,,,1]
+  tbi_LR <- X0[1,,,1]
+  tbi_LL <- X0[1,,,1]
+  tbi_D <- X0[1,,,1]
+  tbi_SC <- X0[1,,,1]
+  tbi_Tr <- X0[1,,,1]
+  tbi_R <- X0[1,,,1]
+  init_U <- X0[1,,,1]
+  init_LR <- X0[1,,,1]
+  init_LL <- X0[1,,,1]
+  init_D <- X0[1,,,1]
+  init_SC <- X0[1,,,1]
+  init_Tr <- X0[1,,,1]
+  init_R <- X0[1,,,1]
+  ## HIV ones
+  dpropinit_hiv <- propinit_hiv <- X0[1,,,]
+
+  ## loop
+  agefracs <- age.frax
+  ageMids <- c(15 / 2, (15 + 50) / 2, 60)
+  HIV_dur_ratio <- 6
+  tol <- 1e-10
+  initD <- Dinit
+  for(i in 1:patch_dims){
+    for(j in 1:age_dims){
+      popinit_byage[i,j ] <- floor(BLASTtbmod::blantyre$population[i] * agefracs[j] /
+                                   (sum(agefracs) + tol))
+      initPrev[i,j] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2) #non-LTBI=U
+      initLL[i,j] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2) #non-LTBI=U
+      initF[i,j] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2) #non-LTBI=U
+       ## safety: should be 1
+      initDenom[i,j ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
+      ## safety
+      tbi_U[i,j ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
+      tbi_LR[i,j] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
+      tbi_LL[i,j] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0
+      tbi_D[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+      tbi_SC[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+      tbi_Tr[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
+      tbi_R[i,j] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
+      ## fill
+      init_U[i,j ] <- round(popinit_byage[i, j] * tbi_U[i, j])
+      init_LR[i,j] <- round(popinit_byage[i,j] * tbi_LR[i,j])
+      init_LL[i,j] <- round(popinit_byage[i,j] * tbi_LL[i,j])
+      init_D[i,j] <- round(popinit_byage[i,j] * tbi_D[i,j])
+      init_SC[i,j] <- round(popinit_byage[i,j] * tbi_SC[i,j])
+      init_Tr[i,j] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
+      init_R[i,j] <- round(popinit_byage[i,j] * tbi_R[i,j])
+
+      ## HIV extras
+      for(k in 1:HIV_dims){
+        dpropinit_hiv[i,j ,k ] <- propinit_hiv[i, j, k] * Hirr[k]
+      }
+      dpropinit_hiv[i,j , 2] <- dpropinit_hiv[i, j, 2] / HIV_dur_ratio
+      dpropinit_hiv[i,j , 1] <- if(1 - sum(dpropinit_hiv[i, j, 2:3])>0) 1 - sum(dpropinit_hiv[i, j, 2:3]) else 0
+
+      ## final initials
+      for(k in 1:HIV_dims){
+         X0["U", i, j, k] <- round(init_U[i, j] * propinit_hiv[i, j, k])
+         X0["LR", i, j, k] <- round(init_LR[i, j] * propinit_hiv[i, j, k])
+         X0["LL", i, j, k] <- round(init_LL[i, j] * propinit_hiv[i, j, k])
+         X0["D", i, j, k] <- round(init_D[i, j] * dpropinit_hiv[i, j, k])
+         X0["SC", i, j, k] <- round(init_SC[i, j] * dpropinit_hiv[i, j, k])
+         X0["Tr", i, j, k] <- round(init_Tr[i, j] * propinit_hiv[i, j, k])
+         X0["R", i, j, k] <- round(init_R[i, j] * propinit_hiv[i, j, k])
+      }
+
+    }
+
+  }
+
 
   if (hiv_checking) {
     print(hiv_init)
@@ -193,6 +280,8 @@ get.parms <- function(start_year,
     plot(HIV_int, col = 2, ylim = c(0, 1.1 * max(HIV_int, ART_int)))
     points(ART_int, col = 3)
   }
+
+  ## Unknown user parameters: agefracs, ageMids, initD, propinit_hiv, ari0
   ## Set up list to pass to model
   parms <- list(
     dt = dt,
@@ -200,15 +289,15 @@ get.parms <- function(start_year,
     Pi = pi,
     epsi = 0, # seasonality
     sim_length = sim_length,
-    popinit = as.numeric(BLASTtbmod::blantyre$population), #2015
+    popinit = X0,
     patch_dims = patch_dims,
     HIV_dims = HIV_dims,
     age_dims = age_dims,
     age_rate = c(1 / 15, 1 / 35, 1e-6),
-    agefracs = age.frax, # initial age fractions
-    ageMids = c(15 / 2, (15 + 50) / 2, 60),
-    initD = Dinit, # initial state
-    propinit_hiv = propinit_hiv,
+    ## agefracs = age.frax, # initial age fractions
+    ## ageMids = ageMids, # age group midpoints
+    ## initD = Dinit, # initial state
+    ## propinit_hiv = propinit_hiv,
     births_int = births_int,
     HIV_int = HIV_int,
     ART_int = ART_int,
@@ -221,7 +310,7 @@ get.parms <- function(start_year,
     IRR = rep(1, patch_dims),
     MM = (diag(patch_dims) * 3 + 0.5) / 3, # mixing matrix
     ## some HIV specifics
-    HIV_dur_ratio = 6, # how much shorter TB in HIV+/ART-
+    HIV_dur_ratio = HIV_dur_ratio, # how much shorter TB in HIV+/ART-
     ART_det_OR = 2, # OR for detection in ART+
     ## TODO hyperparms separate data object
     progress_rate = 0.5, # Progression to clinical
@@ -237,7 +326,7 @@ get.parms <- function(start_year,
     dur = qlnorm(0.5, 1.1, 0.2), # Duration untreated TB - dur
     tfr = qbeta(0.5, 2.71, 87.55), # CFR treated TB - tfr (txf)
     cfr = qbeta(0.5, 25.48, 33.78), # CFR untreated TB - cfr (cfrn)
-    ari0 = ari0, # Initial condition parameter - ?? (ari0)
+    ## ari0 = ari0, # Initial condition parameter - ?? (ari0)
     ACFhaz0 = matrix(0.0, nrow = patch_dims, ncol = sim_length), # asymp ACF haz
     ACFhaz1 = matrix(0.0, nrow = patch_dims, ncol = sim_length) # symp ACF haz
   )
