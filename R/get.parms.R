@@ -352,48 +352,74 @@ restart_parms <- function(parms, restart_step, end_state) {
   cat("Creating new parameters to restart at given step...\n")
   ## gather snapshots for restart
   cat("Summarising end state...\n")
-  denom <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "N")
-  numer <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "D")
-  hnumr <- denom[t == restart_step,
-    .(N = sum(N)),
-    by = .(patch, age, hiv, particle = chain_step)
-  ]
-  denom <- denom[t == restart_step,
-    .(N = sum(N)),
-    by = .(patch, age, particle = chain_step)
-  ]
-  numer <- numer[t == restart_step,
-    .(D = sum(D)),
-    by = .(patch, age, particle = chain_step)
-  ]
+  ## denom <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "N")
+  ## numer <- extract.pops.multi(end_state, dim(end_state)[2], out_type = "D")
+  ## hnumr <- denom[t == restart_step,
+  ##   .(N = sum(N)),
+  ##   by = .(patch, age, hiv, particle = chain_step)
+  ## ]
+  ## denom <- denom[t == restart_step,
+  ##   .(N = sum(N)),
+  ##   by = .(patch, age, particle = chain_step)
+  ## ]
+  ## numer <- numer[t == restart_step,
+  ##   .(D = sum(D)),
+  ##   by = .(patch, age, particle = chain_step)
+  ## ]
 
-  ## TB prevalence by patch and age
-  both <- data.table::merge.data.table(
-    denom, numer,
-    by = c("patch", "age", "particle")
-  )
-  boths <- both[, .(prev = mean(D / N)), by = .(patch, age)]
-  D00 <- data.table::dcast(boths, patch ~ age, value.var = "prev")
-  D00 <- as.matrix(D00[, -1])
+  ## ## TB prevalence by patch and age
+  ## both <- data.table::merge.data.table(
+  ##   denom, numer,
+  ##   by = c("patch", "age", "particle")
+  ## )
+  ## boths <- both[, .(prev = mean(D / N)), by = .(patch, age)]
+  ## D00 <- data.table::dcast(boths, patch ~ age, value.var = "prev")
+  ## D00 <- as.matrix(D00[, -1])
 
-  ## HIV state
-  hnumr[, tot := sum(N), by = .(patch, age, particle)]
-  hnumr[, p := N / tot]
-  hnumr <- hnumr[, .(p = mean(p)), by = .(patch, age, hiv)]
-  H00 <- array(hnumr[order(hiv, age, patch)]$p,
-    c(7, 3, 3),
-    dimnames = list(
-      patch = unique(hnumr$patch),
-      age = unique(hnumr$age),
-      hiv = unique(hnumr$hiv)
-    )
-  )
+  ## ## HIV state
+  ## hnumr[, tot := sum(N), by = .(patch, age, particle)]
+  ## hnumr[, p := N / tot]
+  ## hnumr <- hnumr[, .(p = mean(p)), by = .(patch, age, hiv)]
+  ## H00 <- array(hnumr[order(hiv, age, patch)]$p,
+  ##   c(7, 3, 3),
+  ##   dimnames = list(
+  ##     patch = unique(hnumr$patch),
+  ##     age = unique(hnumr$age),
+  ##     hiv = unique(hnumr$hiv)
+  ##   )
+  ## )
+
+  ## average over particles end
+  ## avstate <- apply(end_state, c(1,3), mean)
+  ## ## X0 <- rpois(n = length(avstate), lambda = avstate)
+  ## X0 <- round(avstate)
+
+  ## compute average at restart step
+  ## xinit <- apply(end_state[, ,restart_step], 1, mean)
+  ## xinit <- round(xinit)
+  xinit <- end_state[, 1,restart_step]
+  names(xinit) <- BLASTtbmod::get_cols
+
+  ## grab the state variables for restart
+  stvrs <- grep("U\\[|LR\\[|LL\\[|D\\[|SC\\[|Tr\\[|R\\[",
+                BLASTtbmod::get_cols,
+                value = TRUE)
+  stvrsn <- seq_len(length(BLASTtbmod::get_cols))[
+    BLASTtbmod::get_cols %in% stvrs
+  ]
+  xinit <- xinit[stvrs]
+  newpopinit <- parms$popinit
+
+  newpopinit <- array(xinit,
+                      dim = dim(newpopinit),
+                      dimnames = dimnames(newpopinit))
 
   cat("Updating parameter object...\n")
   ## rejig args:
   newparms <- parms
-  newparms$initD <- D00
-  newparms$propinit_hiv <- H00
+  ## newparms$initD <- D00
+  ## newparms$propinit_hiv <- H00
+  ## newparms$popinit <- newpopinit
   ## timed items:
   keep <- restart_step:length(parms$tt)
   newparms$tt <- newparms$tt[keep]
