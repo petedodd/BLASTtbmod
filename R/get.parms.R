@@ -14,6 +14,7 @@
 ##' @param ART_haz provides an ART initiation hazard
 ##' @param ART_init_override if >0 provides initial ART prevalence
 ##' @param hiv_checking if TRUE, prints HIV-related parameters and plots HIV incidence and ART initiation over time
+##' @param debug A flag for whether to print more information
 ##' @return list
 ##' @author Pete Dodd
 ##' @export
@@ -29,7 +30,8 @@ get.parms <- function(start_year,
                       hiv_init_override = -1,
                       ART_haz = 0.5,
                       ART_init_override = -1,
-                      hiv_checking = FALSE) {
+                      hiv_checking = FALSE,
+                      debug = FALSE) {
   ########## Model dimensions & simulation parameters required for setup ############
   patch_dims <- 7 # number of patches = 3x3 grid     # Put in func
   age_dims <- 3 # Number of age groups             # put in func
@@ -233,49 +235,65 @@ get.parms <- function(start_year,
   ageMids <- c(15 / 2, (15 + 50) / 2, 60)
   tol <- 1e-10
   initD <- Dinit
-  for(i in 1:patch_dims){
-    for(j in 1:age_dims){
-      popinit_byage[i,j ] <- floor(BLASTtbmod::blantyre$population[i] * agefracs[j] /
-                                   (sum(agefracs) + tol))
-      initPrev[i,j] <- exp( -ari0*ageMids[j] ) * (1-5*initD[i,j]/2) #non-LTBI=U
-      initLL[i,j] <- (1.0 - exp( -ari0*ageMids[j] )) * exp(-2 * ari0) * (1-5*initD[i,j]/2) #non-LTBI=U
-      initF[i,j] <- (1.0 - exp( -ari0*ageMids[j] )) * (1.0 - exp(-2 * ari0)) * (1-5*initD[i,j]/2) #non-LTBI=U
-       ## safety: should be 1
-      initDenom[i,j ] <- initPrev[i,j] + initF[i, j] + initLL[i, j] + 5 * initD[i, j] / 2
-      ## safety
-      tbi_U[i,j ] <- if (initDenom[i, j] > tol) (initPrev[i, j]) / initDenom[i, j] else 0
-      tbi_LR[i,j] <- if(initDenom[i,j] > tol) (initF[i,j])/initDenom[i,j] else 0
-      tbi_LL[i,j] <- if(initDenom[i,j] > tol) (initLL[i,j])/initDenom[i,j] else 0
-      tbi_D[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-      tbi_SC[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-      tbi_Tr[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
-      tbi_R[i,j] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
+  for (i in 1:patch_dims) {
+    for (j in 1:age_dims) {
+      U <- exp(-ari0 * ageMids[j]) #uninfected
+      FNR <- exp(-2 * ari0) # fraction no recent
+      FND <- (1 - 5 * initD[i, j] / 2) # fraction no disease
+      if (debug) cat(c(U, FNR, FND), "\n")
 
-      ## fill
-      init_U[i,j ] <- round(popinit_byage[i, j] * tbi_U[i, j])
-      init_LR[i,j] <- round(popinit_byage[i,j] * tbi_LR[i,j])
-      init_LL[i,j] <- round(popinit_byage[i,j] * tbi_LL[i,j])
-      init_D[i,j] <- round(popinit_byage[i,j] * tbi_D[i,j])
-      init_SC[i,j] <- round(popinit_byage[i,j] * tbi_SC[i,j])
-      init_Tr[i,j] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
-      init_R[i,j] <- round(popinit_byage[i,j] * tbi_R[i,j])
+      popinit_byage[i, j] <- floor(BLASTtbmod::blantyre$population[i] *
+        agefracs[j] /
+        (sum(agefracs) + tol))
 
-      ## final initials
-      for(k in 1:HIV_dims){
-         X0["U", i, j, k] <- round(init_U[i, j] * propinit_hiv[i, j, k])
-         X0["LR", i, j, k] <- round(init_LR[i, j] * propinit_hiv[i, j, k])
-         X0["LL", i, j, k] <- round(init_LL[i, j] * propinit_hiv[i, j, k])
-         ## X0["D", i, j, k] <- round(init_D[i, j] * propinit_hiv[i, j, k])
-         ## X0["SC", i, j, k] <- round(init_SC[i, j] * propinit_hiv[i, j, k])
-         X0["D", i, j, k] <- round(init_D[i, j] * dpropinit_hiv[i, j, k])
-         X0["SC", i, j, k] <- round(init_SC[i, j] * dpropinit_hiv[i, j, k])
-         X0["Tr", i, j, k] <- round(init_Tr[i, j] * propinit_hiv[i, j, k])
-         X0["R", i, j, k] <- round(init_R[i, j] * propinit_hiv[i, j, k])
+      initPrev[i, j] <- U * FND # non-LTBI=U
+      initLL[i, j] <- (1.0 - U) * FNR * FND # non-LTBI=U
+      initF[i, j] <- (1.0 - U) * (1.0 - FNR) * FND # non-LTBI=U
+      ## safety: should be 1
+      initDenom[i, j] <- initPrev[i, j] + initF[i, j] + initLL[i, j] +
+        5 * initD[i, j] / 2
+
+      ## apply
+      tbi_U[i, j] <- initPrev[i, j] / initDenom[i, j]
+      tbi_LR[i, j] <- (initF[i, j]) / initDenom[i, j]
+      tbi_LL[i, j] <-  (initLL[i, j]) / initDenom[i, j]
+      tbi_D[i, j] <-  (initD[i, j] / 2) / initDenom[i, j]
+      tbi_SC[i, j] <-  (initD[i, j] / 2) / initDenom[i, j]
+      tbi_Tr[i, j] <-  (initD[i, j] / 2) / initDenom[i, j]
+      tbi_R[i, j] <- (initD[i, j]) / initDenom[i, j]
+      if (debug) {
+        cat("i=", i, ",j=", j, ", tbi_U[i, j]  = ", tbi_U[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_LR[i, j]  = ", tbi_LR[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_LL[i, j]  = ", tbi_LL[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_D[i, j]  = ", tbi_D[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_SC[i, j]  = ", tbi_SC[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_Tr[i, j]  = ", tbi_Tr[i, j], "\n")
+        cat("i=", i, ",j=", j, ", tbi_R[i, j]  = ", tbi_R[i, j], "\n")
       }
 
-    }
+      ## fill
+      init_U[i, j] <- round(popinit_byage[i, j] * tbi_U[i, j])
+      init_LR[i, j] <- round(popinit_byage[i, j] * tbi_LR[i, j])
+      init_LL[i, j] <- round(popinit_byage[i, j] * tbi_LL[i, j])
+      init_D[i, j] <- round(popinit_byage[i, j] * tbi_D[i, j])
+      init_SC[i, j] <- round(popinit_byage[i, j] * tbi_SC[i, j])
+      init_Tr[i, j] <- round(popinit_byage[i, j] * tbi_Tr[i, j])
+      init_R[i, j] <- round(popinit_byage[i, j] * tbi_R[i, j])
+      
 
+      ## final initials
+      for (k in 1:HIV_dims) {
+        X0["U", i, j, k] <- round(init_U[i, j] * propinit_hiv[i, j, k])
+        X0["LR", i, j, k] <- round(init_LR[i, j] * propinit_hiv[i, j, k])
+        X0["LL", i, j, k] <- round(init_LL[i, j] * propinit_hiv[i, j, k])
+        X0["D", i, j, k] <- round(init_D[i, j] * dpropinit_hiv[i, j, k])
+        X0["SC", i, j, k] <- round(init_SC[i, j] * dpropinit_hiv[i, j, k])
+        X0["Tr", i, j, k] <- round(init_Tr[i, j] * propinit_hiv[i, j, k])
+        X0["R", i, j, k] <- round(init_R[i, j] * propinit_hiv[i, j, k])
+      }
+    }
   }
+
 
 
   if (hiv_checking) {
@@ -338,6 +356,8 @@ get.parms <- function(start_year,
   )
   return(parms)
 }
+
+
 
 
 
@@ -442,4 +462,61 @@ restart_parms <- function(parms, restart_step, end_state) {
   newparms$ACFhaz1 <- newparms$ACFhaz1[, keep]
 
   return(newparms)
+}
+
+
+
+##' Calculate TBI prevalence at given timepoint from model output
+##'
+##'
+##' @title TB infection prevalence from model output
+##' @param X Model output array, in same format as output of 'stocm()'
+##' @param time which step
+##' @param grp either 'adult', 'kid', or 'all' - which group to calculate for
+##' @return vector with mean and 95% quantile over particles for TBI prevalence at given timepoint
+##' @author Pete Dodd
+get_TBI_prev <- function(X, time, grp = "adult") {
+  ## collect relevant state variable indices
+  stvrs <- grep(
+    "U\\[|LR\\[|LL\\[|D\\[|SC\\[|Tr\\[|R\\[",
+    BLASTtbmod::get_cols,
+    value = TRUE
+  )
+  stvrsn <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrs
+  ]
+  ## grep those without 1 in middle index
+  stvrs_kid <- grep(",1,", stvrs, value = TRUE)
+  stvrs_adult <- setdiff(stvrs, stvrs_kid)
+  stvrsn_adult <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrs_adult
+  ]
+  stvrsn_kid <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrs_kid
+  ]
+  stvrsu <- grep("U\\[", BLASTtbmod::get_cols, value = TRUE)
+  stvrsu_kid <- grep(",1,", stvrsu, value = TRUE)
+  stvrsu_adult <- setdiff(stvrsu, stvrsu_kid)
+  stvrsun_adult <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrsu_adult
+  ]
+  stvrsun_kid <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrsu_kid
+  ]
+  stvrsun <- seq_along(BLASTtbmod::get_cols)[
+    BLASTtbmod::get_cols %in% stvrsu
+  ]
+  ## do calculation
+  n <- dim(X)[2]
+  tbi <- rep(0, n)
+  for (i in seq_len(n)) {
+    if (grp == "adult") {
+      tbi[i] <- sum(X[stvrsun_adult, i, time]) / sum(X[stvrsn_adult, i, time])
+    } else if (grp == "kid") {
+      tbi[i] <- sum(X[stvrsun_kid, i, time]) / sum(X[stvrsn_kid, i, time])
+    } else {
+      tbi[i] <- sum(X[stvrsun, i, time]) / sum(X[stvrsn, i, time])
+    }
+  }
+  c(mean = 1 - mean(tbi), quantile(1 - tbi, c(0.025, 0.975)))
 }

@@ -15,7 +15,8 @@ get.parms(
   hiv_init_override = -1,
   ART_haz = 0.5,
   ART_init_override = -1,
-  hiv_checking = FALSE
+  hiv_checking = FALSE,
+  debug = FALSE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ get.parms(
 \item{ART_init_override}{if >0 provides initial ART prevalence}
 
 \item{hiv_checking}{if TRUE, prints HIV-related parameters and plots HIV incidence and ART initiation over time}
+
+\item{debug}{A flag for whether to print more information}
 }
 \value{
 list
