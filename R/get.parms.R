@@ -97,6 +97,7 @@ get.parms <- function(start_year,
   ## Risk-modifiers for TB based on HIV status
   TB_HIV_mod <- c(1, 1, 1) # infection by HIV
   Hirr <- c(1, 20, 4.4) # progression IRR by HIV
+  HIV_dur_ratio <- 6
 
   ## Background death rates by HIV index
   ## set background death rate for ART same as no HIV
@@ -144,7 +145,8 @@ get.parms <- function(start_year,
     patch_dims,
     age_dims,
     HIV_dims
-  ))
+    ))
+  dpropinit_hiv <- propinit_hiv
 
   if (!start_year %in% BLASTtbmod::hivp_mwi$Period) {
     stop("Need start year in HIV prevalence data range!")
@@ -183,6 +185,17 @@ get.parms <- function(start_year,
     }
   }
 
+  ## HIV in TB
+  for(i in 1:patch_dims){
+    for(j in 1:age_dims){
+      for(k in 1:HIV_dims){
+        dpropinit_hiv[i,j ,k ] <- propinit_hiv[i, j, k] * Hirr[k]
+      }
+      dpropinit_hiv[i,j , 2] <- dpropinit_hiv[i, j, 2] / HIV_dur_ratio
+      dpropinit_hiv[i,j , 1] <- if(1 - sum(dpropinit_hiv[i, j, 2:3])>0) 1 - sum(dpropinit_hiv[i, j, 2:3]) else 0
+    }
+  }
+
   ## === new bit to build initial population outside
   X0 <- array(0,
               dim = c(7, patch_dims, age_dims, HIV_dims),
@@ -214,13 +227,10 @@ get.parms <- function(start_year,
   init_SC <- X0[1,,,1]
   init_Tr <- X0[1,,,1]
   init_R <- X0[1,,,1]
-  ## HIV ones
-  dpropinit_hiv <- propinit_hiv <- X0[1,,,]
 
   ## loop
   agefracs <- age.frax
   ageMids <- c(15 / 2, (15 + 50) / 2, 60)
-  HIV_dur_ratio <- 6
   tol <- 1e-10
   initD <- Dinit
   for(i in 1:patch_dims){
@@ -240,6 +250,7 @@ get.parms <- function(start_year,
       tbi_SC[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
       tbi_Tr[i,j] <- if(initDenom[i,j] > tol) (initD[i,j]/2)/initDenom[i,j] else 0
       tbi_R[i,j] <- if(initDenom[i,j] > tol) (initD[i,j])/initDenom[i,j] else 0
+
       ## fill
       init_U[i,j ] <- round(popinit_byage[i, j] * tbi_U[i, j])
       init_LR[i,j] <- round(popinit_byage[i,j] * tbi_LR[i,j])
@@ -249,18 +260,13 @@ get.parms <- function(start_year,
       init_Tr[i,j] <- round(popinit_byage[i,j] * tbi_Tr[i,j])
       init_R[i,j] <- round(popinit_byage[i,j] * tbi_R[i,j])
 
-      ## HIV extras
-      for(k in 1:HIV_dims){
-        dpropinit_hiv[i,j ,k ] <- propinit_hiv[i, j, k] * Hirr[k]
-      }
-      dpropinit_hiv[i,j , 2] <- dpropinit_hiv[i, j, 2] / HIV_dur_ratio
-      dpropinit_hiv[i,j , 1] <- if(1 - sum(dpropinit_hiv[i, j, 2:3])>0) 1 - sum(dpropinit_hiv[i, j, 2:3]) else 0
-
       ## final initials
       for(k in 1:HIV_dims){
          X0["U", i, j, k] <- round(init_U[i, j] * propinit_hiv[i, j, k])
          X0["LR", i, j, k] <- round(init_LR[i, j] * propinit_hiv[i, j, k])
          X0["LL", i, j, k] <- round(init_LL[i, j] * propinit_hiv[i, j, k])
+         ## X0["D", i, j, k] <- round(init_D[i, j] * propinit_hiv[i, j, k])
+         ## X0["SC", i, j, k] <- round(init_SC[i, j] * propinit_hiv[i, j, k])
          X0["D", i, j, k] <- round(init_D[i, j] * dpropinit_hiv[i, j, k])
          X0["SC", i, j, k] <- round(init_SC[i, j] * dpropinit_hiv[i, j, k])
          X0["Tr", i, j, k] <- round(init_Tr[i, j] * propinit_hiv[i, j, k])
