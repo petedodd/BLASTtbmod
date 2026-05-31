@@ -474,6 +474,7 @@ restart_parms <- function(parms, restart_step, end_state) {
 ##' @param time which step
 ##' @param grp either 'adult', 'kid', or 'all' - which group to calculate for
 ##' @return vector with mean and 95% quantile over particles for TBI prevalence at given timepoint
+##' @export
 ##' @author Pete Dodd
 get_TBI_prev <- function(X, time, grp = "adult") {
   ## collect relevant state variable indices
