@@ -14,3 +14,11 @@ devtools::install("my.local.path.to/BLASTtbmod")
 ```
 
 where `my.local.path.to` needs editing for your filesystem
+
+Various prerequisites are required, including:
+
+```r
+pak::pkg_install(c("mrc-ide/odin", "mrc-ide/odin.dust"))
+pak::pkg_install(c("mrc-ide/dust", "mrc-ide/mcstate"))
+pak::pkg_install(c("logitnorm", "ggh4x"))
+```
