@@ -4,7 +4,7 @@
 \alias{restart_parms}
 \title{Restart parameters at given step}
 \usage{
-restart_parms(parms, restart_step, end_state)
+restart_parms(parms, restart_step, end_state, sim_length = NULL)
 }
 \arguments{
 \item{parms}{Parameter list from previous runs, see 'get.parms()'}
@@ -12,6 +12,8 @@ restart_parms(parms, restart_step, end_state)
 \item{restart_step}{Step to restart at, in same units as 'tt' in parms}
 
 \item{end_state}{Output from previous runs, in same format as output of 'stocm()' - should contain all timesteps up to and including restart_step}
+
+\item{sim_length}{How long is the new simulation? If NULL, will use length of 'tt' in parms minus restart_step}
 }
 \value{
 Updated parameter list with initial conditions and time-varying parameters updated to restart at given step

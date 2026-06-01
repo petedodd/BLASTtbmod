@@ -202,7 +202,7 @@ plot_compare_noterate_agrgt <- function(Y,
       tot_notes = sum(notes)
     ) %>%
     data.table::as.data.table()
-  aggD[, noterate := tot_notes / tot_N * 1e5]
+  aggD[, noterate := tot_notes / (tot_N + 1e-10) * 1e5]
 
   # Generate ribbon
   eps = 0.25
@@ -236,7 +236,7 @@ plot_compare_noterate_agrgt <- function(Y,
       shape = 1
     )
   }
-  print(p)
+  p
 }
 
 

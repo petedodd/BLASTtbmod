@@ -2,10 +2,10 @@
 ##'
 ##' TODO
 ##' @title Run dust version of model
-##' @param parm 
-##' @param times 
-##' @param n.particles 
-##' @param convert 
+##' @param parm input list of arguments
+##' @param times vector of times to run over (from 1)
+##' @param n.particles number of particles to run
+##' @param convert whether to try to convert to named data.frame (do not use!)
 ##' @return array
 ##' @author Pete Dodd
 ##' @import dust

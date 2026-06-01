@@ -11,6 +11,7 @@
 ##' @param n.chains number of PMCMC chains to run
 ##' @param n.threads number of threads to use (not tested)
 ##' @param n.epochs number of times to re-run PMCMC updating the proposal matrix based on previous run
+##' @param n.workers number of workers - see mcstate
 ##' @param save_restart where to save the restart
 ##' @param transform if not supplied will default to transform = function(theta) c(parms, as.list(theta))
 ##' @param mcmc_pars if not supplied, will create from prior.list & initial.proposal.matrix (& optionally transform)
@@ -26,6 +27,7 @@ run.pmcmc <- function(particle.filter,
                       n.steps, n.burnin, n.chains,
                       n.threads = 4,
                       n.epochs = 1,
+                      n.workers = 1,
                       save_restart=NULL,
                       transform=NULL,
                       mcmc_pars=NULL,
@@ -63,6 +65,7 @@ run.pmcmc <- function(particle.filter,
                           restart_match = TRUE,
                           n_chains = n.chains,
                           n_threads_total = n.threads,
+                          n_workers = n.workers,
                           progress = TRUE
                         )
     ## run filter

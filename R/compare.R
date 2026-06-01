@@ -3,9 +3,9 @@
 ##' See mcstate docs
 ##'
 ##' @title Comparison function with data
-##' @param state 
-##' @param observed 
-##' @param pars 
+##' @param state state from model
+##' @param observed observed data
+##' @param pars potential additional parameters
 ##' @return real
 ##' @author Pete Dodd
 ##' @export
