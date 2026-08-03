@@ -13,14 +13,12 @@ case_compare7 <- function(state, observed, pars = NULL) {
   ans <- rep(0, dim(state)[2]) # no particles long
   for (i in 1:7) {
     ## n particles long @ given timestep
-    ## NOTE changed to calculate total note before aggregation and then calculate rates
-    ## rate x pop = 7 total notes x 100k
-    totnotes <- colSums(
-      state[BLASTtbmod::ln7[[i]], , drop = TRUE] *
-      state[BLASTtbmod::bn7[[i]], , drop = TRUE]
-    )
+    ## ln7/bn7 index raw notes[] and N[] state summed over all age x HIV
+    ## strata for zone i -- true per-100k rate is 1e5*sum(notes)/sum(N),
+    ## NOT sum(notes*N) (which double-counts population and isn't a rate)
+    totnotes <- colSums(state[BLASTtbmod::ln7[[i]], , drop = TRUE])
     totpops <- colSums(state[BLASTtbmod::bn7[[i]], , drop = TRUE])
-    notes_modelled <- totnotes / totpops # back to rate
+    notes_modelled <- 1e5 * totnotes / totpops # per 100,000
     notes_observed <- observed[[paste0("notifrate_", i)]]
     ans <- ans + dnorm(x = notes_modelled,
                        mean = notes_observed,
