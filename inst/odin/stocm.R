@@ -481,6 +481,15 @@ dim( bg_deaths ) <- c( patch_dims, age_dims, HIV_dims )
 dim( MM ) <- c( patch_dims, patch_dims )
 dim( foitemp ) <- c( patch_dims, patch_dims )
 dim( foi ) <- patch_dims
+## [0,1]-clamp intermediates for InfsByPatchPatch/NotesByPatchPatch (see below)
+dim(raw_InfPP1) <- patch_dims
+dim(p_InfPP1) <- patch_dims
+dim(raw_InfPPj) <- c(patch_dims, patch_dims)
+dim(p_InfPPj) <- c(patch_dims, patch_dims)
+dim(raw_NotePP1) <- patch_dims
+dim(p_NotePP1) <- patch_dims
+dim(raw_NotePPj) <- c(patch_dims, patch_dims)
+dim(p_NotePPj) <- c(patch_dims, patch_dims)
 ## the first 7 is the number of states
 dim(popinit) <- c(7, patch_dims, age_dims, HIV_dims )
 dim(birthparm) <- patch_dims
@@ -651,8 +660,17 @@ update(U[,,]) <- U[i,j,k] + births[i,j,k] + age_in_U[i,j,k] + HIV_in_U[i,j,k] - 
 InfsByPatch[1:patch_dims] <- sum(Uinfs[i, , ]) + sum(LLinfs[i,,]) + sum(Rinfs[i,,])
 
 ## correct looped binom implementation of multinomial
-InfsByPatchPatch[1:patch_dims, 1] <- if(InfsByPatch[i]>0) rbinom(InfsByPatch[i], foitemp[i, 1] / (foi[i] + tol)) else 0
-InfsByPatchPatch[1:patch_dims, 2:patch_dims] <- if(InfsByPatch[i] - sum(InfsByPatchPatch[i, 1:(j - 1)]) > 0) rbinom(InfsByPatch[i] - sum(InfsByPatchPatch[i, 1:(j - 1)]), foitemp[i, j] / (sum(foitemp[i, j:patch_dims]) + tol)) else 0
+## NOTE: probabilities clamped to [0,1] -- with heterogeneous per-patch
+## prevalence/mixing and very small foitemp/foi magnitudes, floating-point
+## error in these ratios could make the binomial probability
+## fractionally outside [0,1] and crash the simulation. min()/max() are
+## not available in odin.dust, so the clamp is written as nested if/else.
+raw_InfPP1[1:patch_dims] <- foitemp[i, 1] / (foi[i] + tol)
+p_InfPP1[1:patch_dims] <- if (raw_InfPP1[i] < 0) 0 else (if (raw_InfPP1[i] > 1) 1 else raw_InfPP1[i])
+raw_InfPPj[1:patch_dims, 2:patch_dims] <- foitemp[i, j] / (sum(foitemp[i, j:patch_dims]) + tol)
+p_InfPPj[1:patch_dims, 2:patch_dims] <- if (raw_InfPPj[i, j] < 0) 0 else (if (raw_InfPPj[i, j] > 1) 1 else raw_InfPPj[i, j])
+InfsByPatchPatch[1:patch_dims, 1] <- if(InfsByPatch[i]>0) rbinom(InfsByPatch[i], p_InfPP1[i]) else 0
+InfsByPatchPatch[1:patch_dims, 2:patch_dims] <- if(InfsByPatch[i] - sum(InfsByPatchPatch[i, 1:(j - 1)]) > 0) rbinom(InfsByPatch[i] - sum(InfsByPatchPatch[i, 1:(j - 1)]), p_InfPPj[i, j]) else 0
 
 ## ## debug/test
 ## InfsByPatchPatch[1:patch_dims, 1:patch_dims] <- round(InfsByPatch[i] * foitemp[i, j] / (foi[i] + tol)) #debug
@@ -664,8 +682,13 @@ InfPrev[1:patch_dims] <- (sum(D[i, , ]) + relinf * sum(SC[i, , ])) / (sum(N[i, ,
 update(PrevByPatch[1:patch_dims]) <- InfPrev[i]
 
 NotesByPatch[] <- sum(notes[i,,]) #summing over age/HIV
-NotesByPatchPatch[1:patch_dims, 1] <- if(NotesByPatch[i] > 0) rbinom(NotesByPatch[i], ellij[i, 1] / (sum(ellij[i,1:patch_dims]) + tol)) else 0
-NotesByPatchPatch[1:patch_dims, 2:patch_dims] <- if(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]) > 0) rbinom(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]), ellij[i, j] / (sum(ellij[i, j:patch_dims]) + tol)) else 0
+## NOTE: same [0,1] clamp as InfsByPatchPatch above, and for the same reason
+raw_NotePP1[1:patch_dims] <- ellij[i, 1] / (sum(ellij[i,1:patch_dims]) + tol)
+p_NotePP1[1:patch_dims] <- if (raw_NotePP1[i] < 0) 0 else (if (raw_NotePP1[i] > 1) 1 else raw_NotePP1[i])
+raw_NotePPj[1:patch_dims, 2:patch_dims] <- ellij[i, j] / (sum(ellij[i, j:patch_dims]) + tol)
+p_NotePPj[1:patch_dims, 2:patch_dims] <- if (raw_NotePPj[i, j] < 0) 0 else (if (raw_NotePPj[i, j] > 1) 1 else raw_NotePPj[i, j])
+NotesByPatchPatch[1:patch_dims, 1] <- if(NotesByPatch[i] > 0) rbinom(NotesByPatch[i], p_NotePP1[i]) else 0
+NotesByPatchPatch[1:patch_dims, 2:patch_dims] <- if(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]) > 0) rbinom(NotesByPatch[i] - sum(NotesByPatchPatch[i, 1:(j - 1)]), p_NotePPj[i, j]) else 0
 
 ## ## test/debug
 ## NotesByPatchPatch[1:patch_dims, 1:patch_dims] <-  round(NotesByPatch[i] * ellij[i, j] / (sum(ellij[i, 1:patch_dims]) + tol)) #debug
@@ -1253,8 +1276,8 @@ ellij[, ] <- abs(A0 * Sij[i, j] + A[1] * Tijk[i, j, 1] + A[2] * Tijk[i, j, 2] + 
 ## rho    :  pDr  #relapse rate
 ## tau    :  1/t_dur    #1/treatment dur
 Pomega  <-  1/dur      #tb cessation
-Pdelta  <-  dtct_rate[1]  #detection rate TODO
-Pmu     <-  mu_noHIV_int[2,1] #mortality: TODO possible to make mean?
+Pdelta  <-  dtct_rate[1]  #detection rate
+Pmu     <-  mu_noHIV_int[2,1] #mortality
 Psigma  <-  pLL #stabilisation
 Palpha  <-  pDf #fast progression
 Pepsilon<-  pDs #slow progn
